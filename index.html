@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- 글꼴: 영문 제목 Poppins, 한글 Noto Sans KR -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Poppins:wght@800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20">
+  <link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
 
@@ -89,9 +89,13 @@
     <section class="section" id="news">
       <div class="wrap reveal">
         <div class="head">
-          <div>
-            <h2 class="en-title">NEWS</h2>
-            <span class="pill-tag">소식</span>
+          <div class="title-row">
+            <div>
+              <h2 class="en-title">NEWS</h2>
+              <span class="pill-tag">소식</span>
+            </div>
+            <!-- 숫자가 랜덤하게 돌다가 보는 사람의 오늘 날짜가 됨 (script.js) -->
+            <span class="today" id="today" aria-label="오늘 날짜">2026</span>
           </div>
           <a class="more" href="#news" aria-label="소식 더 보기">→</a>
         </div>
@@ -222,6 +226,6 @@
     <a class="btn dark float-contact" href="#contact">연락하기</a>
   </div>
 
-  <script src="script.js?v=20"></script>
+  <script src="script.js?v=21"></script>
 </body>
 </html>

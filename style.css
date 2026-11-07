@@ -226,3 +226,19 @@ mark {
   .js .reveal { opacity: 1; transform: none; transition: none; }
   .card, .more, .arrow, .btn, .float, .to-top { transition: none; }
 }
+
+/* ===== NEWS 옆 오늘 날짜 (숫자 굴리기) ===== */
+.title-row { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0 28px; }
+/* 날짜는 NEWS 제목과 같은 글씨(크기 · 굵기 · 간격)로, 캡슐 없이 */
+.today {
+  display: inline-flex; align-items: center;
+  font-family: var(--font-en); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;
+  font-size: clamp(40px, 7vw, 72px);
+}
+.today .ch { display: inline-block; width: .64em; text-align: center; }  /* 숫자 칸 폭 고정: 흔들리지 않게 */
+.today .ch.dot { width: .3em; }
+.today .ch.rolling { opacity: .45; }                                    /* 돌아가는 동안 흐리게 */
+.today .ch.stop { animation: pop .35s ease; color: var(--ink); }
+.today .ch.stop:not(.dot) { background: linear-gradient(transparent 70%, var(--coral) 70%, var(--coral) 92%, transparent 92%); }
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .today .ch.stop { animation: none; } }
