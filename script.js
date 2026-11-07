@@ -285,3 +285,52 @@ document.documentElement.classList.add('js');
   window.addEventListener('load', measure);
   if (document.readyState === 'complete') measure();
 })();
+
+// 헤더 로고 '쑝이놀이터': 글자마다 글꼴이 랜덤하게, 천천히 바뀐다. (흐려졌다가 바뀌고 다시 또렷해짐)
+(function () {
+  var logo = document.querySelector('.logo');
+  if (!logo) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // [글꼴 이름, 굵기, 크기 보정]
+  var FONTS = [
+    ['Noto Sans KR', 800, 1], ['Jua', 400, 1], ['Do Hyeon', 400, 1], ['Black Han Sans', 400, 0.95],
+    ['Gamja Flower', 400, 1.2], ['Gaegu', 700, 1.2], ['Hi Melody', 400, 1.15], ['Gugi', 400, 0.95],
+    ['Single Day', 400, 1.1], ['Cute Font', 400, 1.1]
+  ];
+  var MIN_WAIT = 3000, MAX_WAIT = 6500;   // 한 글자가 다시 바뀔 때까지 걸리는 시간(ms)
+  function rand(a, b) { return a + Math.random() * (b - a); }
+
+  // 글자마다 칸으로 나눈다
+  var text = logo.textContent;
+  logo.textContent = '';
+  var letters = [];
+  for (var i = 0; i < text.length; i++) {
+    var s = document.createElement('span');
+    s.textContent = text.charAt(i);
+    s.setAttribute('aria-hidden', 'true');
+    logo.appendChild(s);
+    letters.push({ el: s, now: 0 });
+  }
+
+  function change(item) {
+    var n;
+    do { n = Math.floor(Math.random() * FONTS.length); } while (n === item.now);   // 직전과 다른 글꼴
+    item.el.classList.add('fade');                                                 // 천천히 흐려지고
+    setTimeout(function () {
+      var f = FONTS[n];
+      item.el.style.fontFamily = '"' + f[0] + '", sans-serif';                   // 글꼴 바꾸고
+      item.el.style.fontWeight = f[1];
+      item.el.style.fontSize = f[2] + 'em';
+      item.now = n;
+      item.el.classList.remove('fade');                                            // 다시 또렷해짐
+    }, 850);
+    setTimeout(function () { change(item); }, rand(MIN_WAIT, MAX_WAIT));
+  }
+
+  // 글꼴이 다 받아진 뒤에 시작 (받는 중에 깜빡이지 않도록)
+  var loads = FONTS.map(function (f) { return document.fonts ? document.fonts.load(f[1] + ' 24px "' + f[0] + '"', text) : Promise.resolve(); });
+  Promise.all(loads).catch(function () {}).then(function () {
+    letters.forEach(function (item) { setTimeout(function () { change(item); }, rand(500, 4000)); });
+  });
+})();
