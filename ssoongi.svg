@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 290" role="img" aria-label="쑝이 캐릭터: 동그란 아기 새">
+<style>
+.eyes{transform-box:fill-box;transform-origin:center;animation:blink 4.5s infinite}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+.mouth{transform-box:view-box;transform-origin:150px 160px;animation:talk 6s infinite}
+@keyframes talk{0%{transform:scaleY(.08)}5%{transform:scaleY(1)}9%{transform:scaleY(.15)}13%{transform:scaleY(1)}17%{transform:scaleY(.15)}21%{transform:scaleY(1)}25%{transform:scaleY(.15)}29%{transform:scaleY(1)}33%{transform:scaleY(.15)}37%{transform:scaleY(1)}41%{transform:scaleY(.15)}45%{transform:scaleY(1)}49%{transform:scaleY(.15)}53%{transform:scaleY(1)}57%{transform:scaleY(.15)}61%{transform:scaleY(1)}65%{transform:scaleY(.15)}70%{transform:scaleY(.08)}100%{transform:scaleY(.08)}}
+.wl{transform-origin:84px 140px;animation:wingL 1.8s ease-in-out infinite alternate}
+.wr{transform-origin:216px 140px;animation:wingR 1.8s ease-in-out infinite alternate}
+@keyframes wingL{from{transform:rotate(0)}to{transform:rotate(9deg)}}
+@keyframes wingR{from{transform:rotate(0)}to{transform:rotate(-9deg)}}
+@media (prefers-reduced-motion:reduce){.eyes,.mouth,.wl,.wr{animation:none}.mouth{transform:scaleY(.08)}}
+</style>
+<defs><filter id="sh" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#3c2d14" flood-opacity=".28"/></filter></defs>
+<g filter="url(#sh)">
+<path d="M112 255 L138 255 L134 268 L122 262 L108 268Z" fill="#B98F64"/><path d="M162 255 L188 255 L192 268 L178 262 L166 268Z" fill="#B98F64"/>
+<path class="wl" d="M58 150 L78 132 L92 160 L88 205 L66 215 L50 185Z" fill="#4A78B5"/><path class="wr" d="M242 150 L222 132 L208 160 L212 205 L234 215 L250 185Z" fill="#4A78B5"/>
+<path d="M250.0 165.0 L244.5 181.8 L242.1 198.9 L234.3 214.6 L221.6 227.0 L208.9 239.1 L194.0 248.9 L176.5 253.5 L158.9 256.6 L141.0 257.4 L123.4 253.7 L106.6 247.8 L91.8 238.2 L76.9 228.4 L66.3 214.2 L59.5 198.3 L54.6 181.9 L50.2 165.0 L54.5 148.0 L58.6 131.4 L68.3 116.9 L78.6 103.2 L90.0 89.6 L106.4 81.8 L123.7 77.2 L141.0 73.1 L159.0 73.0 L176.7 75.8 L192.9 83.2 L208.0 92.1 L222.7 102.0 L233.8 115.7 L240.0 131.9 L246.9 147.8Z" fill="#E6B53C"/>
+<path d="M211.5 200.0 L208.9 214.8 L202.4 228.3 L193.1 240.3 L179.3 247.5 L165.5 254.2 L150.0 255.5 L134.8 253.2 L119.1 250.1 L106.9 240.4 L98.1 228.1 L91.9 214.6 L89.5 200.0 L90.8 185.2 L99.1 172.5 L106.3 159.1 L119.7 150.8 L134.3 145.1 L150.0 144.2 L165.2 147.0 L180.1 151.3 L193.4 159.4 L202.4 171.7 L208.9 185.2Z" fill="#F6E7A8"/>
+<path d="M138 76 L132 40 L150 70Z" fill="#A9BFA3"/><path d="M150 72 L152 32 L164 72Z" fill="#4C5A3A"/><path d="M162 74 L176 46 L176 82Z" fill="#A9BFA3"/>
+<path d="M114.3 182.0 L113.2 186.0 L110.2 189.5 L105.4 191.5 L100.0 192.2 L94.4 191.9 L90.5 188.9 L86.9 186.0 L86.6 182.0 L87.2 178.1 L90.2 174.8 L94.6 172.5 L100.0 171.7 L105.3 172.7 L109.4 175.1 L113.2 178.0Z" fill="#B98F64" opacity=".7"/><path d="M213.7 182.0 L213.4 186.1 L209.9 189.2 L205.5 191.7 L200.0 192.6 L194.5 191.7 L190.4 189.0 L187.6 185.8 L185.2 182.0 L187.5 178.2 L189.5 174.3 L194.5 172.3 L200.0 171.2 L205.7 171.9 L209.3 175.2 L213.5 177.9Z" fill="#B98F64" opacity=".7"/>
+<path class="mouth" d="M134 160 L166 160 L150 196 Z" fill="#8f4a3a"/>
+<path d="M131 157 L169 157 L150 173 Z" fill="#B98F64"/>
+</g>
+<g class="eyes"><ellipse cx="116" cy="146" rx="7" ry="9" fill="#222"/><ellipse cx="184" cy="146" rx="7" ry="9" fill="#222"/>
+<circle cx="118.5" cy="142" r="2.4" fill="#FBF8F1"/><circle cx="186.5" cy="142" r="2.4" fill="#FBF8F1"/></g>
+</svg>
