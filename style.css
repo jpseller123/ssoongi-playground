@@ -275,3 +275,24 @@ mark {
 .hi.show { opacity: 1; transform: translate(-50%, 0); }
 @media (max-width: 700px) { .hi { font-size: 11px; padding: 0 7px; } }
 @media (prefers-reduced-motion: reduce) { .arch img { animation: none !important; } }
+
+/* ===== 첫 화면 캐릭터를 누르면 마우스 포인터가 됨 (script.js) ===== */
+.arch { cursor: pointer; }
+.arch.picked { box-shadow: 0 0 0 3px var(--coral); }          /* 지금 포인터로 쓰는 캐릭터 표시 */
+html.has-pet, html.has-pet * { cursor: none !important; }      /* 원래 화살표는 숨김 */
+.pet {
+  position: fixed; left: 0; top: 0; z-index: 9999; width: 56px; height: 56px;
+  pointer-events: none; opacity: 0; transition: opacity .15s; will-change: transform;
+}
+.pet.on { opacity: 1; }
+.pet img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(0 2px 2px rgba(34,34,34,.25)); }
+.pet.moving img { animation: pet-bob .35s ease-in-out infinite alternate; }
+@keyframes pet-bob { from { transform: translateY(0) rotate(-5deg); } to { transform: translateY(-4px) rotate(5deg); } }
+.toast {
+  position: fixed; left: 50%; bottom: 28px; z-index: 9998; transform: translate(-50%, 10px);
+  background: var(--ivory); border: var(--line); border-radius: 999px;
+  font-size: 13px; font-weight: 700; padding: 6px 18px; opacity: 0; pointer-events: none;
+  transition: opacity .25s, transform .25s; white-space: nowrap; box-shadow: 0 3px 8px rgba(34,34,34,.15);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) { .pet.moving img { animation: none; } .pet, .toast { transition: none; } }

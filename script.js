@@ -158,3 +158,130 @@ document.documentElement.classList.add('js');
     if (!calm) setTimeout(walk, rand(200, 1800));
   });
 })();
+
+// 첫 화면 캐릭터를 누르면 그 캐릭터가 마우스 포인터가 된다. 같은 캐릭터를 다시 누르거나 Esc를 누르면 원래대로.
+(function () {
+  var arches = document.querySelectorAll('.arch');
+  var mouse = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (!arches.length || !mouse) return;      // 휴대폰 · 터치는 포인터가 없으므로 쉬기
+
+  var NAMES = ['쑝이', '몽이', '콩이', '별이'];
+  var root = document.documentElement;
+  var pet = document.createElement('div');
+  pet.className = 'pet';
+  pet.setAttribute('aria-hidden', 'true');
+  var petImg = document.createElement('img');
+  petImg.alt = '';
+  pet.appendChild(petImg);
+  document.body.appendChild(pet);
+
+  var toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.setAttribute('role', 'status');
+  document.body.appendChild(toast);
+  var toastTimer, moveTimer, picked = null, lastX = 0;
+
+  function say(text) {
+    toast.textContent = text;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2400);
+  }
+  function place(x, y) { pet.style.transform = 'translate3d(' + (x - 28) + 'px,' + (y - 28) + 'px,0)'; }
+
+  function choose(arch, index, x, y) {
+    if (picked === arch) {                       // 같은 캐릭터를 다시 누르면 해제
+      release(true);
+      return;
+    }
+    if (picked) picked.classList.remove('picked');
+    picked = arch;
+    arch.classList.add('picked');
+    arches.forEach(function (a) { a.setAttribute('aria-pressed', a === arch ? 'true' : 'false'); });
+    petImg.src = arch.querySelector('img').getAttribute('src');
+    if (typeof x === 'number') place(x, y);
+    pet.classList.add('on');
+    root.classList.add('has-pet');
+    say((NAMES[index] || '캐릭터') + '가 포인터가 되었어요! 다시 누르거나 Esc를 누르면 원래대로');
+  }
+  function release(announce) {
+    if (!picked) return;
+    picked.classList.remove('picked');
+    arches.forEach(function (a) { a.setAttribute('aria-pressed', 'false'); });
+    picked = null;
+    pet.classList.remove('on', 'moving');
+    root.classList.remove('has-pet');
+    if (announce) say('원래 포인터로 돌아왔어요');
+  }
+
+  arches.forEach(function (arch, index) {
+    arch.setAttribute('role', 'button');
+    arch.setAttribute('tabindex', '0');
+    arch.setAttribute('aria-pressed', 'false');
+    arch.setAttribute('aria-label', (NAMES[index] || '캐릭터') + '를 마우스 포인터로 쓰기');
+    arch.addEventListener('click', function (e) { choose(arch, index, e.clientX, e.clientY); });
+    arch.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(arch, index); }
+    });
+  });
+
+  document.addEventListener('mousemove', function (e) {
+    if (!picked) return;
+    place(e.clientX, e.clientY);
+    pet.classList.add('on', 'moving');
+    petImg.style.scale = e.clientX < lastX - 1 ? '-1 1' : (e.clientX > lastX + 1 ? '1 1' : petImg.style.scale);   // 가는 쪽으로 몸 돌리기
+    lastX = e.clientX;
+    clearTimeout(moveTimer);
+    moveTimer = setTimeout(function () { pet.classList.remove('moving'); }, 150);
+  });
+  document.addEventListener('mouseleave', function () { pet.classList.remove('on'); });
+  document.addEventListener('mouseenter', function () { if (picked) pet.classList.add('on'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') release(true); });
+})();
+
+// 첫 화면 아치 칸: 높이가 랜덤하게 줄었다 늘었다 한다 (바닥은 그대로, 위쪽이 오르내림).
+(function () {
+  var box = document.querySelector('.arches');
+  var arches = document.querySelectorAll('.arch');
+  if (!box || !arches.length) return;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  var SHRINK = 0.72, GROW = 1.15;        // 처음 높이의 72% ~ 115% 사이에서 움직임
+  var info = [], timers = [];
+  function rand(a, b) { return a + Math.random() * (b - a); }
+
+  // 처음(CSS가 정한) 높이를 읽고, 아래 글이 흔들리지 않도록 전체 높이를 고정한다.
+  function measure() {
+    timers.forEach(clearTimeout); timers = [];
+    var tallest = 0;
+    arches.forEach(function (arch, i) {
+      arch.style.transition = 'none';
+      arch.style.height = '';                              // 꾸밈 높이로 되돌려서 읽기
+      var base = arch.offsetHeight;
+      var mb = parseFloat(getComputedStyle(arch).marginBottom) || 0;
+      var img = arch.querySelector('img');
+      var floor = Math.max(base * SHRINK, (img ? img.offsetHeight : 0) + 30);   // 캐릭터가 잘리지 않을 만큼
+      info[i] = { base: base, min: floor, max: base * GROW, now: base };
+      tallest = Math.max(tallest, base * GROW + mb);
+    });
+    var pad = parseFloat(getComputedStyle(box).paddingBottom) || 0;
+    box.style.height = Math.ceil(tallest + pad) + 'px';
+    arches.forEach(function (arch, i) { arch.style.height = info[i].base + 'px'; });
+    arches.forEach(function (arch, i) { timers.push(setTimeout(function () { change(arch, i); }, rand(300, 2500))); });
+  }
+
+  function change(arch, i) {
+    var d = info[i], target;
+    do { target = rand(d.min, d.max); } while (Math.abs(target - d.now) < (d.max - d.min) * 0.3);   // 눈에 띄게 달라지게
+    var dur = rand(1.4, 3);
+    arch.style.transition = 'height ' + dur + 's ease-in-out';
+    arch.style.height = target + 'px';
+    d.now = target;
+    timers[i] = setTimeout(function () { change(arch, i); }, dur * 1000 + rand(300, 1800));
+  }
+
+  var t;
+  window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(measure, 200); });
+  window.addEventListener('load', measure);
+  if (document.readyState === 'complete') measure();
+})();
