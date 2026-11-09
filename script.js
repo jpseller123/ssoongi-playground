@@ -490,3 +490,20 @@ document.documentElement.classList.add('js');
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
   apply();
 })();
+
+// CONTACT 구역: 처음엔 바탕 띠가 얇다가 스크롤을 내리면 아래에서 위로 두꺼워진다.
+(function () {
+  var foot = document.getElementById("contact");
+  if (!foot) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var ticking = false;
+  function grow() {
+    ticking = false;
+    var r = foot.getBoundingClientRect(), vh = window.innerHeight;
+    var p = Math.max(0, Math.min(1, (vh - r.top) / Math.max(1, r.height)));   // 구역이 화면에 올라온 정도
+    foot.style.setProperty("--grow", (0.1 + 0.9 * p).toFixed(3));
+  }
+  window.addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(grow); } }, { passive: true });
+  window.addEventListener("resize", grow);
+  grow();
+})();

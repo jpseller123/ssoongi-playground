@@ -204,7 +204,12 @@ mark {
 @media (prefers-reduced-motion: reduce) { .friend-arch { transition: none; } }
 
 /* ===== 6. CONTACT ===== */
-.contact { background: var(--bg-deep); padding: var(--section-y) var(--side) 50px; text-align: center; border-top: var(--line); }
+.contact { position: relative; isolation: isolate; padding: var(--section-y) var(--side) 50px; text-align: center; }
+/* 진한 베이지 바탕 띠: 처음엔 얇다가 스크롤을 내리면 아래에서 위로 두꺼워짐(--grow는 script.js가 0~1로 바꿈) */
+.contact::before {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; z-index: -1;
+  height: calc(var(--grow, 1) * 100%); background: var(--bg-deep); border-top: var(--line);
+}
 .en-title.big { font-size: clamp(48px, 10vw, 120px); }
 .contact-lead { margin: 18px 0 28px; }
 .buttons { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 70px; }
