@@ -92,7 +92,7 @@ ul { list-style: none; }
 
 /* ===== 2. 첫 화면 ===== */
 .hero { padding-top: 130px; position: relative; overflow: hidden; }
-.hero .wrap { max-width: none; padding-inline: max(var(--side), calc((100% - var(--max)) / 2)); }
+.hero .wrap { transform-origin: 50% 0; will-change: transform, opacity; max-width: none; padding-inline: max(var(--side), calc((100% - var(--max)) / 2)); }
 .hero .en-title { font-size: clamp(40px, 8.4vw, 100px); }
 .hero .en-title span { display: block; }
 /* 한 단어만 코랄 형광펜 효과: 물결 모양 띠가 옆으로 천천히 흘러서 두꺼워졌다 얇아졌다 하며 물결치는 것처럼 보임 */

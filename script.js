@@ -385,3 +385,23 @@ document.documentElement.classList.add('js');
     if (!running) { running = true; requestAnimationFrame(tick); }
   }, { passive: true });
 })();
+
+// 첫 화면: 스크롤을 내리면 부드럽게 작아지면서 위로 올라간다(스크롤 양에 맞춰 연속으로 변함).
+(function () {
+  var hero = document.querySelector(".hero");
+  var wrap = hero && hero.querySelector(".wrap");
+  if (!wrap) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var ticking = false;
+  function apply() {
+    ticking = false;
+    var p = Math.max(0, Math.min(1, window.scrollY / Math.max(1, hero.offsetHeight)));
+    if (p === 0) { wrap.style.transform = ""; wrap.style.opacity = ""; return; }
+    wrap.style.transform = "translateY(" + (-p * 70).toFixed(1) + "px) scale(" + (1 - p * 0.16).toFixed(3) + ")";
+    wrap.style.opacity = (1 - p * 0.5).toFixed(3);
+  }
+  window.addEventListener("scroll", function () {
+    if (!ticking) { ticking = true; requestAnimationFrame(apply); }
+  }, { passive: true });
+  apply();
+})();
