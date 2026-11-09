@@ -343,3 +343,20 @@ document.documentElement.classList.add('js');
     letters.forEach(function (item) { setTimeout(function () { change(item); }, rand(500, 4000)); });
   });
 })();
+
+// 첫 화면 PLAYGROUND 밑줄 물결: 물결마다 높이가 랜덤으로 다르게(열 때마다 새로 만듦).
+(function () {
+  var mark = document.querySelector(".hero mark");
+  if (!mark) return;
+  var HALF = 28, N = 20, d = "M0 10", x = 0, i, cy;       // 반 마디 28px, 20개 = 560px 한 줄
+  for (i = 0; i < N; i++) {
+    cy = (i % 2 === 0) ? (-6 + Math.random() * 12) : (14 + Math.random() * 12);  // 위로 솟기 / 아래로 처지기 높이가 제각각
+    d += " Q" + (x + HALF / 2) + " " + cy.toFixed(1) + " " + (x + HALF) + " 10";
+    x += HALF;
+  }
+  d += " V20 H0 Z";
+  var svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 " + x + " 20\" preserveAspectRatio=\"none\"><path d=\"" + d + "\" fill=\"#F29B8B\"/></svg>";
+  mark.style.backgroundImage = "url(\"data:image/svg+xml," + encodeURIComponent(svg) + "\")";
+  mark.style.backgroundSize = x + "px 55%";
+  mark.style.setProperty("--tile", x + "px");
+})();
