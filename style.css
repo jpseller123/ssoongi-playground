@@ -260,14 +260,18 @@ mark {
   .card, .more, .arrow, .btn, .float, .to-top { transition: none; }
 }
 
-/* ===== NEWS 옆 오늘 날짜 (숫자 굴리기) ===== */
+/* ===== 첫 화면 HELLO! 옆 오늘 날짜 (숫자 굴리기) ===== */
 .title-row { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0 28px; }
-/* 날짜는 NEWS 제목과 같은 글씨(크기 · 굵기 · 간격)로, 캡슐 없이 */
+/* HELLO! 줄: 날짜가 옆에 나란히(좁은 화면에서는 아래로 내려감) */
+.hero .en-title .hello-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .4em; }
+/* 날짜는 제목과 같은 글꼴 · 굵기로, 크기는 제목의 절반 정도, 캡슐 없이 */
 .today {
   display: inline-flex; align-items: center;
   font-family: var(--font-en); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;
-  font-size: clamp(40px, 7vw, 72px);
+  font-size: .5em;
 }
+.hero .en-title .today { display: inline-flex; }
+.hero .en-title .today .ch { display: inline-block; }   /* 제목 안 span 규칙에 눌리지 않게 */
 .today .ch { display: inline-block; width: .64em; text-align: center; }  /* 숫자 칸 폭 고정: 흔들리지 않게 */
 .today .ch.dot { width: .3em; }
 .today .ch.rolling { opacity: .45; }                                    /* 돌아가는 동안 흐리게 */

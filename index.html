@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Poppins:wght@800&display=swap" rel="stylesheet">
   <!-- 헤더 로고 글자(쑝이놀이터)에만 쓰는 여러 글꼴: 필요한 글자만 받아서 가벼워요 -->
   <link href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&family=Black+Han+Sans&family=Gamja+Flower&family=Gaegu:wght@700&family=Hi+Melody&family=Gugi&family=Single+Day&family=Cute+Font&display=swap&text=%EC%91%9D%EC%9D%B4%EB%86%80%ED%84%B0" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=33">
+  <link rel="stylesheet" href="style.css?v=34">
 </head>
 <body>
 
@@ -32,7 +32,10 @@
     <section class="hero">
       <div class="wrap">
         <h1 class="en-title">
-          <span>HELLO!</span>
+          <span class="hello-row">HELLO!
+            <!-- 숫자가 랜덤하게 돌다가 보는 사람의 오늘 날짜가 됨 (script.js) -->
+            <span class="today" id="today" aria-label="오늘 날짜">2026</span>
+          </span>
           <span>WELCOME TO</span>
           <span><mark>PLAYGROUND</mark></span>
         </h1>
@@ -102,8 +105,6 @@
               <h2 class="en-title">NEWS</h2>
               <span class="pill-tag">소식</span>
             </div>
-            <!-- 숫자가 랜덤하게 돌다가 보는 사람의 오늘 날짜가 됨 (script.js) -->
-            <span class="today" id="today" aria-label="오늘 날짜">2026</span>
           </div>
           <a class="more" href="#news" aria-label="소식 더 보기">→</a>
         </div>
