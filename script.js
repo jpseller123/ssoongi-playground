@@ -399,7 +399,7 @@ document.documentElement.classList.add('js');
   if (!wrap || !word || !dock) return;
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-  var GAP = 10;                                   // 남은 제목들 사이 간격(px)
+  var GAP = 28;                                   // 남은 제목들 사이 간격(px): 컴퓨터 28 · 휴대폰 10(measure에서 정함)
   var ids = ["news", "works", "friends", "about"];
   var items = [];                                 // 구역 제목들: { h, dock, T, L, fs, w, endLeft }
   ids.forEach(function (id) {
@@ -425,6 +425,7 @@ document.documentElement.classList.add('js');
       // 글자들이 같은 점(첫 화면 맨 위 가운데)을 기준으로 줄어들게 맞춤
       e.style.transformOrigin = (hero.offsetWidth / 2 - e.offsetLeft) + "px " + (-e.offsetTop) + "px";
     });
+    GAP = window.innerWidth <= 700 ? 10 : 28;
     endFs = window.innerWidth <= 700 ? 13 : 24;   // 남는 글자 크기: 컴퓨터 24px · 휴대폰 13px(헤더 로고보다 조금 큼)
     var x = m.left + textW(dock, m.fs) * endFs / m.fs + GAP;
     items.forEach(function (it) {
