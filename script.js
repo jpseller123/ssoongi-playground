@@ -386,22 +386,50 @@ document.documentElement.classList.add('js');
   }, { passive: true });
 })();
 
-// 첫 화면: 스크롤을 내리면 부드럽게 작아지면서 위로 올라간다(스크롤 양에 맞춰 연속으로 변함).
+// 첫 화면: 스크롤을 내리면 부드럽게 많이 작아지며 올라가고, HELLO!만 헤더 바로 밑에 헤더보다 조금 큰 크기로 남는다.
 (function () {
   var hero = document.querySelector(".hero");
   var wrap = hero && hero.querySelector(".wrap");
-  if (!wrap) return;
+  var word = hero && hero.querySelector(".hello-word");
+  var dock = document.getElementById("helloDock");
+  var nav = document.querySelector(".nav");
+  if (!wrap || !word || !dock) return;
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  var ticking = false;
+  var ticking = false, m = null;
+  var END_FS = 24;                         // 남는 HELLO!의 글자 크기(헤더 로고는 16~20px)
+
+  function measure() {                     // 맨 위에 있을 때의 HELLO! 자리와 크기를 잰다
+    var t = wrap.style.transform, o = wrap.style.opacity;
+    wrap.style.transform = ""; wrap.style.opacity = "";
+    var r = word.getBoundingClientRect();
+    m = { left: r.left, top: r.top + window.scrollY, fs: parseFloat(getComputedStyle(word).fontSize) };
+    wrap.style.transform = t; wrap.style.opacity = o;
+  }
   function apply() {
     ticking = false;
-    var p = Math.max(0, Math.min(1, window.scrollY / Math.max(1, hero.offsetHeight)));
-    if (p === 0) { wrap.style.transform = ""; wrap.style.opacity = ""; return; }
-    wrap.style.transform = "translateY(" + (-p * 70).toFixed(1) + "px) scale(" + (1 - p * 0.16).toFixed(3) + ")";
-    wrap.style.opacity = (1 - p * 0.5).toFixed(3);
+    if (!m) measure();
+    var y = window.scrollY, h = Math.max(1, hero.offsetHeight);
+    var p = Math.max(0, Math.min(1, y / h));
+    if (p === 0) {
+      wrap.style.transform = ""; wrap.style.opacity = "";
+      word.style.visibility = ""; dock.style.opacity = 0;
+      return;
+    }
+    wrap.style.transform = "translateY(" + (-p * 90).toFixed(1) + "px) scale(" + (1 - p * 0.4).toFixed(3) + ")";
+    wrap.style.opacity = (1 - p * 0.75).toFixed(3);
+    // HELLO!: 원래 자리에서 출발해 헤더 밑 자리로 작아지며 이동
+    var q = Math.max(0, Math.min(1, y / (h * 0.7)));
+    var endTop = (nav ? nav.offsetHeight : 50) + 6;
+    word.style.visibility = "hidden";
+    dock.style.opacity = 1;
+    dock.style.left = m.left + "px";
+    dock.style.top = ((1 - q) * (m.top - y) + q * endTop).toFixed(1) + "px";
+    dock.style.fontSize = (m.fs + (END_FS - m.fs) * q).toFixed(1) + "px";
   }
   window.addEventListener("scroll", function () {
     if (!ticking) { ticking = true; requestAnimationFrame(apply); }
   }, { passive: true });
+  window.addEventListener("resize", function () { m = null; apply(); });
+  window.addEventListener("load", function () { m = null; apply(); });
   apply();
 })();

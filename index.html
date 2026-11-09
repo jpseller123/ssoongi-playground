@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Poppins:wght@800&display=swap" rel="stylesheet">
   <!-- 헤더 로고 글자(쑝이놀이터)에만 쓰는 여러 글꼴: 필요한 글자만 받아서 가벼워요 -->
   <link href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&family=Black+Han+Sans&family=Gamja+Flower&family=Gaegu:wght@700&family=Hi+Melody&family=Gugi&family=Single+Day&family=Cute+Font&display=swap&text=%EC%91%9D%EC%9D%B4%EB%86%80%ED%84%B0" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=41">
+  <link rel="stylesheet" href="style.css?v=42">
 </head>
 <body>
 
@@ -32,7 +32,7 @@
     <section class="hero">
       <div class="wrap">
         <h1 class="en-title">
-          <span class="hello-row">HELLO!
+          <span class="hello-row"><span class="hello-word">HELLO!</span>
             <!-- 숫자가 랜덤하게 돌다가 보는 사람의 오늘 날짜가 됨 (script.js) -->
             <span class="today" id="today" aria-label="오늘 날짜">2026</span>
           </span>
@@ -257,6 +257,9 @@
     </div>
   </footer>
 
+  <!-- 스크롤하면 헤더 밑에 남는 HELLO! (script.js가 위치 · 크기를 정함) -->
+  <div class="hello-dock" id="helloDock" aria-hidden="true">HELLO!</div>
+
   <!-- 스크롤을 내리면 따라다니는 버튼 -->
   <div class="float" id="float">
     <button class="to-top" id="toTop" type="button" aria-label="맨 위로 올라가기">
@@ -265,6 +268,6 @@
     <a class="btn dark float-contact" href="#contact">연락하기</a>
   </div>
 
-  <script src="script.js?v=33"></script>
+  <script src="script.js?v=34"></script>
 </body>
 </html>
