@@ -361,3 +361,27 @@ document.documentElement.classList.add('js');
   mark.style.setProperty("--tile", x + "px");
   mark.style.animationDuration = (x / 20) + "s";           // 초당 20px로 천천히 흐름
 })();
+
+// 연락하기 · 맨 위로 버튼: 스크롤하면 내용과 함께 딸려 움직이다가 출렁이며 제자리로 돌아온다(스프링).
+(function () {
+  var box = document.getElementById("float");
+  if (!box) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var lastY = window.scrollY, pos = 0, vel = 0, running = false;
+  function tick() {
+    vel += -pos * 0.1;            // 제자리로 끌어당기는 힘
+    vel *= 0.82;                  // 출렁임이 잦아드는 정도
+    pos += vel;
+    box.style.transform = "translateY(" + pos.toFixed(2) + "px)";
+    if (Math.abs(pos) < 0.05 && Math.abs(vel) < 0.05) {
+      pos = 0; vel = 0; box.style.transform = ""; running = false; return;
+    }
+    requestAnimationFrame(tick);
+  }
+  window.addEventListener("scroll", function () {
+    var d = window.scrollY - lastY; lastY = window.scrollY;
+    pos -= Math.max(-14, Math.min(14, d * 0.5));   // 내려가면 위로, 올라가면 아래로 살짝 딸려 감
+    pos = Math.max(-60, Math.min(60, pos));
+    if (!running) { running = true; requestAnimationFrame(tick); }
+  }, { passive: true });
+})();
