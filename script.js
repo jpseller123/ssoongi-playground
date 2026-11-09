@@ -108,7 +108,7 @@ document.documentElement.classList.add('js');
   }
 
   arches.forEach(function (arch, index) {
-    var img = arch.querySelector('img');
+    var img = arch.querySelector('.cimg');
     if (!img) return;
     var speed = [40, 55, 28, 45][index] || 40;                   // 캐릭터마다 걷는 속도(px/초)
     var greeting = false, lastGreet = '', lastWord = '', walkTimer = null, hideTimer = null;
@@ -207,7 +207,7 @@ document.documentElement.classList.add('js');
     picked = arch;
     arch.classList.add('picked');
     arches.forEach(function (a) { a.setAttribute('aria-pressed', a === arch ? 'true' : 'false'); });
-    petImg.src = arch.querySelector('img').getAttribute('src');
+    petImg.src = arch.querySelector('.cimg').getAttribute('data-src');
     if (typeof x === 'number') place(x, y);
     pet.classList.add('on');
     root.classList.add('has-pet');
@@ -268,7 +268,7 @@ document.documentElement.classList.add('js');
       arch.style.height = '';                              // 꾸밈 높이로 되돌려서 읽기
       var base = arch.offsetHeight;
       var mb = parseFloat(getComputedStyle(arch).marginBottom) || 0;
-      var img = arch.querySelector('img');
+      var img = arch.querySelector('.cimg');
       var floor = Math.max(base * SHRINK, (img ? img.offsetHeight : 0) + 30);   // 캐릭터가 잘리지 않을 만큼
       info[i] = { base: base, min: floor, max: base * GROW, now: base };
       tallest = Math.max(tallest, base * GROW + mb);
@@ -506,4 +506,52 @@ document.documentElement.classList.add('js');
   window.addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(grow); } }, { passive: true });
   window.addEventListener("resize", grow);
   grow();
+})();
+
+// 첫 화면 캐릭터: 그림 파일(SVG)을 칸 안에 넣어서(스타일이 서로 섞이지 않게 shadow 안에), 눈이 마우스를 따라 움직이게 한다.
+// 파일을 못 불러오면(컴퓨터에서 파일을 바로 열었을 때 등) 원래 그림 그대로 보인다.
+(function () {
+  var hosts = Array.prototype.slice.call(document.querySelectorAll(".arch .cimg"));
+  if (!hosts.length || !hosts[0].attachShadow) return;
+  var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var list = [];                                  // { host, eyes }
+  hosts.forEach(function (host) {
+    var src = host.getAttribute("data-src"), fallback = host.querySelector("img");
+    var sr = host.attachShadow({ mode: "open" });
+    var st = document.createElement("style");
+    st.textContent = "svg, img { display: block; width: 100%; height: auto; }";
+    sr.appendChild(st);
+    var first = document.createElement("img");    // 불러오는 동안(또는 실패하면) 보이는 그림
+    first.src = src; first.alt = fallback ? fallback.alt : "";
+    sr.appendChild(first);
+    if (calm || !window.fetch) return;
+    fetch(src).then(function (r) { return r.ok ? r.text() : Promise.reject(); }).then(function (txt) {
+      var doc = new DOMParser().parseFromString(txt, "image/svg+xml");
+      var svg = doc.documentElement;
+      if (!svg || svg.nodeName.toLowerCase() !== "svg") return;
+      var node = document.importNode(svg, true);
+      sr.replaceChild(node, first);
+      var eyes = node.querySelector(".eyes");
+      if (eyes) { eyes.style.transition = "translate .15s ease-out"; list.push({ host: host, eyes: eyes }); }
+    }).catch(function () {});
+  });
+  if (calm) return;
+
+  var mx = null, my = null, ticking = false;
+  function look() {
+    ticking = false;
+    if (mx === null) return;
+    list.forEach(function (it) {
+      var r = it.host.getBoundingClientRect();
+      var dx = mx - (r.left + r.width / 2), dy = my - (r.top + r.height * 0.4);
+      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      var k = Math.min(dist / 220, 1);            // 가까우면 조금, 멀면 최대 4칸만큼
+      var ux = dx / dist;
+      if ((it.host.style.scale || "").indexOf("-1") === 0) ux = -ux;   // 몸이 돌아서 있을 땐 좌우 반대로
+      it.eyes.style.translate = (ux * k * 4).toFixed(2) + "px " + ((dy / dist) * k * 3).toFixed(2) + "px";
+    });
+  }
+  function move(e) { mx = e.clientX; my = e.clientY; if (!ticking) { ticking = true; requestAnimationFrame(look); } }
+  document.addEventListener("pointermove", move, { passive: true });
+  window.addEventListener("scroll", function () { if (!ticking && mx !== null) { ticking = true; requestAnimationFrame(look); } }, { passive: true });
 })();
