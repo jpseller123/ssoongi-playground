@@ -95,6 +95,11 @@ mark {
   padding: 0 4px; margin: 0 -4px;
 }
 .lead { margin-top: 20px; font-size: 16px; max-width: 34em; }
+.hint {
+  display: inline-block; margin-top: 14px; font-size: 13px; font-weight: 700; line-height: 1.5;
+  padding: 5px 16px; border: 2px solid var(--sky); border-radius: 999px; background: var(--ivory);
+}
+@media (hover: none) { .hint { display: none; } }
 
 /* 아치(윗부분이 둥근 문 모양) 칸 4개: 가운데 둘은 더 크게, 높이는 엇갈리게 */
 .arches {
