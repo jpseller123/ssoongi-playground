@@ -348,7 +348,7 @@ document.documentElement.classList.add('js');
 (function () {
   var mark = document.querySelector(".hero mark");
   if (!mark) return;
-  var HALF = 28, N = 20, d = "M0 10", x = 0, i, cy;       // 반 마디 28px, 20개 = 560px 한 줄
+  var HALF = 230, N = 10, d = "M0 10", x = 0, i, cy;       // 반 마디 230px(넓게), 10개 = 2300px 한 줄 → 화면에 봉우리 1~2개만 보임
   for (i = 0; i < N; i++) {
     cy = (i % 2 === 0) ? (-6 + Math.random() * 12) : (14 + Math.random() * 12);  // 위로 솟기 / 아래로 처지기 높이가 제각각
     d += " Q" + (x + HALF / 2) + " " + cy.toFixed(1) + " " + (x + HALF) + " 10";
@@ -359,4 +359,5 @@ document.documentElement.classList.add('js');
   mark.style.backgroundImage = "url(\"data:image/svg+xml," + encodeURIComponent(svg) + "\")";
   mark.style.backgroundSize = x + "px 55%";
   mark.style.setProperty("--tile", x + "px");
+  mark.style.animationDuration = (x / 20) + "s";           // 초당 20px로 천천히 흐름
 })();
