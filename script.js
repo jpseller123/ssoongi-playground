@@ -18,6 +18,15 @@ document.documentElement.classList.add('js');
   items.forEach(function (el) { io.observe(el); });
 })();
 
+// 맨 위 메뉴: 스크롤을 내리면 얇아진다(.slim 클래스, 모양은 style.css).
+(function () {
+  var nav = document.querySelector(".nav");
+  if (!nav) return;
+  function slim() { nav.classList.toggle("slim", window.scrollY > 40); }
+  window.addEventListener("scroll", slim, { passive: true });
+  slim();
+})();
+
 // 스크롤을 내리면 따라다니는 '연락하기'와 '맨 위로' 버튼이 나타난다.
 (function () {
   var box = document.getElementById('float');
