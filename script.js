@@ -3,6 +3,24 @@
 // 자바스크립트가 켜져 있을 때만 '올라오며 나타나기'를 쓰도록 표시 (꺼져 있으면 그냥 다 보임)
 document.documentElement.classList.add('js');
 
+// 부드러운 스크롤 값: 실제 스크롤 위치를 바로 쓰지 않고 천천히 따라가게(물 흐르듯) 만든 값(Flow.y).
+// 제목 모으기 · 첫 화면 글자 · CONTACT 띠가 이 값을 써서 스크롤을 멈춰도 잠깐 더 흘러가다 멈춘다.
+var Flow = (function () {
+  var subs = [], y = window.scrollY, run = false, last = 0;
+  var calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function frame(now) {
+    var t = window.scrollY, dt = Math.min(64, now - (last || now - 16)); last = now;
+    y += (t - y) * (calm ? 1 : 1 - Math.pow(1 - 0.12, dt / 16.7));   // 12%씩 따라감(프레임 속도와 상관없이 같은 느낌)
+    if (Math.abs(t - y) < 0.2) y = t;
+    for (var i = 0; i < subs.length; i++) subs[i]();
+    if (y !== t) requestAnimationFrame(frame); else { run = false; last = 0; }
+  }
+  function kick() { if (!run) { run = true; requestAnimationFrame(frame); } }
+  window.addEventListener("scroll", kick, { passive: true });
+  window.addEventListener("resize", kick);
+  return { add: function (f) { subs.push(f); }, get y() { return y; } };
+})();
+
 // 스크롤하면 각 구역이 아래에서 부드럽게 올라오며 나타난다 (0.6초는 style.css에서 정함)
 (function () {
   var items = document.querySelectorAll('.reveal');
@@ -449,7 +467,7 @@ document.documentElement.classList.add('js');
   function apply() {
     ticking = false;
     if (!m) measure();
-    var y = window.scrollY, vh = window.innerHeight, h = Math.max(1, hero.offsetHeight);
+    var y = Flow.y, vh = window.innerHeight, h = Math.max(1, hero.offsetHeight);   // 부드러운 스크롤 값
     var endTop = (nav ? nav.offsetHeight : 50) + 6;
 
     // 구역 제목: 화면 위쪽 35%에 들어오면 작아지며 헤더 밑 자리로 이동
@@ -457,9 +475,10 @@ document.documentElement.classList.add('js');
       var vp = it.T - y;                          // 제목의 지금 화면 위치
       var trig = Math.min(vh * 0.35, 170);        // 제목 링크로 이동했을 때 제목이 제자리에 보이도록 너무 일찍 시작하지 않음
       var q = clamp01((trig - vp) / (trig - endTop));
-      if (q <= 0) { it.h.style.visibility = ""; it.dock.style.opacity = 0; setOn(it.dock, false); return; }
-      it.h.style.visibility = "hidden";
-      it.dock.style.opacity = 1;
+      if (q <= 0) { it.h.style.opacity = ""; it.dock.style.opacity = 0; setOn(it.dock, false); return; }
+      var fade = Math.min(1, q / 0.2);               // 원래 제목은 흐려지고 작은 제목은 선명해지며 자연스럽게 바뀜
+      it.h.style.opacity = (1 - fade).toFixed(3);
+      it.dock.style.opacity = fade.toFixed(3);
       it.dock.style.left = lerp(it.L, it.endLeft, q).toFixed(1) + "px";
       it.dock.style.top = lerp(vp, endTop, q).toFixed(1) + "px";
       it.dock.style.fontSize = lerp(it.fs, endFs, q).toFixed(1) + "px";
@@ -482,9 +501,7 @@ document.documentElement.classList.add('js');
     }
   }
   function remeasure() { m = null; apply(); }
-  window.addEventListener("scroll", function () {
-    if (!ticking) { ticking = true; requestAnimationFrame(apply); }
-  }, { passive: true });
+  Flow.add(apply);
   window.addEventListener("resize", remeasure);
   window.addEventListener("load", remeasure);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
@@ -500,10 +517,11 @@ document.documentElement.classList.add('js');
   function grow() {
     ticking = false;
     var r = foot.getBoundingClientRect(), vh = window.innerHeight;
-    var p = Math.max(0, Math.min(1, (vh - r.top) / Math.max(1, r.height)));   // 구역이 화면에 올라온 정도
+    var top = r.top + (window.scrollY - Flow.y);       // 부드러운 스크롤 기준 위치
+    var p = Math.max(0, Math.min(1, (vh - top) / Math.max(1, r.height)));   // 구역이 화면에 올라온 정도
     foot.style.setProperty("--grow", (0.1 + 0.9 * p).toFixed(3));
   }
-  window.addEventListener("scroll", function () { if (!ticking) { ticking = true; requestAnimationFrame(grow); } }, { passive: true });
+  Flow.add(grow);
   window.addEventListener("resize", grow);
   grow();
 })();
