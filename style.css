@@ -204,6 +204,12 @@ mark {
 @media (max-width: 700px) { .friend-grid { gap: 14px; } }
 @media (prefers-reduced-motion: reduce) { .friend-arch { transition: none; } }
 
+/* 타이핑 효과 (ABOUT 소개) */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.type-rest { visibility: hidden; }
+.type-caret { width: 2px; height: 1.05em; margin-left: 2px; vertical-align: -0.15em; background: var(--coral); animation: caret-blink 1s steps(1) infinite; }
+@keyframes caret-blink { 50% { opacity: 0; } }
+
 /* ===== 6. CONTACT ===== */
 .contact { position: relative; isolation: isolate; padding: var(--section-y) var(--side) 50px; text-align: center; }
 /* 진한 베이지 바탕 띠: 처음엔 얇다가 스크롤을 내리면 아래에서 위로 두꺼워짐(--grow는 script.js가 0~1로 바꿈) */
@@ -232,6 +238,19 @@ mark {
 .float .to-top { opacity: 0; visibility: hidden; transform: translateY(12px); transition: opacity .3s, transform .3s, visibility .3s; }
 .float.show .to-top { opacity: 1; visibility: visible; transform: none; }
 .float.show .to-top:hover { transform: translateY(-3px); }
+/* 배경음악 버튼 (처음엔 꺼짐: 빗금 있는 음표, 켜지면 코랄색 + 음표가 통통) */
+.bgm {
+  position: relative; width: 46px; height: 46px; border-radius: 50%; cursor: pointer;
+  border: 2px solid var(--sky); background: var(--ivory); color: var(--ink);
+  font-size: 22px; line-height: 1; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 8px rgba(34,34,34,.18); transition: transform .2s, background .25s;
+}
+.bgm:hover { transform: translateY(-3px); }
+.bgm[aria-pressed="false"]::after { content: ""; position: absolute; left: 9px; right: 9px; top: 50%; border-top: 2px solid var(--ink); transform: rotate(-40deg); }
+.bgm[aria-pressed="true"] { background: var(--coral); border-color: var(--ink); }
+.bgm[aria-pressed="true"] span { animation: note-bob 1s ease-in-out infinite; }
+@keyframes note-bob { 0%, 100% { transform: translateY(1px) rotate(-6deg); } 50% { transform: translateY(-3px) rotate(6deg); } }
+@media (prefers-reduced-motion: reduce) { .bgm, .bgm span { transition: none; animation: none !important; } }
 .float-contact { box-shadow: 0 3px 8px rgba(34,34,34,.18); }
 .to-top {
   width: 46px; height: 46px; border-radius: 50%; border: var(--line); cursor: pointer;
