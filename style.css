@@ -282,6 +282,17 @@ mark {
   transition: opacity .3s ease; transform-origin: 0 60%;
 }
 /* 작은 HELLO!: 부드럽게 나타나며 통통 튐 */
+.hello-dock { text-decoration: none; }
+.hello-dock.on { pointer-events: auto; cursor: pointer; }          /* 자리 잡은 제목은 눌러서 이동 */
+.hello-dock.on:hover { text-decoration: underline; text-decoration-color: var(--coral); text-decoration-thickness: 3px; text-underline-offset: 4px; }
+/* 구역 제목: 헤더 밑에 닿는 순간 통통 한 번 튐 */
+.hello-dock.settle { animation: dock-bounce .5s cubic-bezier(.34, 1.4, .64, 1); }
+@keyframes dock-bounce {
+  0%   { transform: none; }
+  40%  { transform: translateY(5px) scale(1.2); }
+  72%  { transform: translateY(-2px) scale(.95); }
+  100% { transform: none; }
+}
 #helloDock.pop { opacity: 1; animation: dock-pop .6s cubic-bezier(.34, 1.4, .64, 1) both; }
 @keyframes dock-pop {
   0%   { opacity: 0; transform: translateY(-14px) scale(.4); }

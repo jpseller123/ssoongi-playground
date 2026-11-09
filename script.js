@@ -405,8 +405,10 @@ document.documentElement.classList.add('js');
   ids.forEach(function (id) {
     var h = document.querySelector("#" + id + " h2.en-title");
     if (!h) return;
-    var d = document.createElement("div");
-    d.className = "hello-dock"; d.setAttribute("aria-hidden", "true"); d.textContent = h.textContent.trim();
+    var d = document.createElement("a");          // 눌러서 해당 구역으로 이동하는 링크
+    d.className = "hello-dock"; d.href = "#" + id; d.tabIndex = -1;
+    d.setAttribute("aria-label", h.textContent.trim() + " 구역으로 이동");
+    d.textContent = h.textContent.trim();
     document.body.appendChild(d);
     items.push({ h: h, dock: d });
   });
@@ -435,6 +437,12 @@ document.documentElement.classList.add('js');
       x += textW(it.dock, it.fs) * endFs / it.fs + GAP;
     });
   }
+  function setOn(d, on) {                         // on: 헤더 밑에 자리 잡음(통통 튀기 + 클릭 가능)
+    if (d.classList.contains("on") === on) return;
+    d.classList.toggle("on", on);
+    if (d !== dock) d.classList.toggle("settle", on);
+    if (on) d.removeAttribute("tabindex"); else d.tabIndex = -1;
+  }
   function lerp(a, b, q) { return a + (b - a) * q; }
   function clamp01(v) { return Math.max(0, Math.min(1, v)); }
 
@@ -447,13 +455,15 @@ document.documentElement.classList.add('js');
     // 구역 제목: 화면 위쪽 35%에 들어오면 작아지며 헤더 밑 자리로 이동
     items.forEach(function (it) {
       var vp = it.T - y;                          // 제목의 지금 화면 위치
-      var q = clamp01((vh * 0.35 - vp) / (vh * 0.35 - endTop));
-      if (q <= 0) { it.h.style.visibility = ""; it.dock.style.opacity = 0; return; }
+      var trig = Math.min(vh * 0.35, 170);        // 제목 링크로 이동했을 때 제목이 제자리에 보이도록 너무 일찍 시작하지 않음
+      var q = clamp01((trig - vp) / (trig - endTop));
+      if (q <= 0) { it.h.style.visibility = ""; it.dock.style.opacity = 0; setOn(it.dock, false); return; }
       it.h.style.visibility = "hidden";
       it.dock.style.opacity = 1;
       it.dock.style.left = lerp(it.L, it.endLeft, q).toFixed(1) + "px";
       it.dock.style.top = lerp(vp, endTop, q).toFixed(1) + "px";
       it.dock.style.fontSize = lerp(it.fs, endFs, q).toFixed(1) + "px";
+      setOn(it.dock, q >= 1);                       // 자리 잡는 순간 통통 튀고, 눌러서 이동할 수 있게 됨
     });
 
     // 첫 화면 글자: 작아지며 올라가 사라지고, 다 사라지면 작은 HELLO!가 헤더 밑에 통통 튀며 나타남
@@ -466,9 +476,9 @@ document.documentElement.classList.add('js');
     });
     if (q0 >= 1) {
       dock.style.left = m.left + "px"; dock.style.top = endTop + "px"; dock.style.fontSize = endFs + "px";
-      dock.classList.add("pop");
+      dock.classList.add("pop"); setOn(dock, true);
     } else {
-      dock.classList.remove("pop");
+      dock.classList.remove("pop"); setOn(dock, false);
     }
   }
   function remeasure() { m = null; apply(); }
