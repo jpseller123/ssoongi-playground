@@ -230,6 +230,7 @@ var Flow = (function () {
     pet.classList.add('on');
     root.classList.add('has-pet');
     say((NAMES[index] || '캐릭터') + '가 포인터가 되었어요! 다시 누르거나 Esc를 누르면 원래대로');
+    document.dispatchEvent(new CustomEvent('pet-change', { detail: { index: index } }));   // 그 캐릭터의 배경음악으로 바뀜
   }
   function release(announce) {
     if (!picked) return;
@@ -239,6 +240,7 @@ var Flow = (function () {
     pet.classList.remove('on', 'moving');
     root.classList.remove('has-pet');
     if (announce) say('원래 포인터로 돌아왔어요');
+    document.dispatchEvent(new CustomEvent('pet-change', { detail: { index: -1 } }));
   }
 
   arches.forEach(function (arch, index) {
@@ -574,28 +576,98 @@ var Flow = (function () {
   window.addEventListener("scroll", function () { if (!ticking && mx !== null) { ticking = true; requestAnimationFrame(look); } }, { passive: true });
 })();
 
-// 배경음악: 직접 지은 쉬운 멜로디(8마디)를 리코더 소리처럼 코드로 만들어 반복 연주한다. 파일이 없어서 저작권 걱정 없음.
-// 브라우저 규칙상 소리는 사용자가 오른쪽 아래 ♪ 버튼을 눌러야 시작된다.
+// 배경음악: 직접 지은 쉬운 멜로디를 코드로 만든 악기 소리로 반복 연주한다. 파일이 없어서 저작권 걱정 없음.
+// 기본 곡(신나고 우당탕한 리코더 + 북) + 캐릭터마다 다른 곡 4개(모두 신나고 엉뚱하게).
+// 첫 화면 캐릭터를 눌러 포인터로 바꾸면 그 캐릭터의 곡으로 바뀐다.
+// 브라우저 규칙상 소리는 사용자가 누르는 순간부터 시작할 수 있다(♪ 버튼 또는 캐릭터 누르기).
 (function () {
   var btn = document.getElementById("bgm");
   if (!btn) return;
   var AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) { btn.hidden = true; return; }
 
-  var BPM = 100, BEAT = 60 / BPM, VOLUME = 0.22;
-  // [음높이(MIDI 번호), 박자] — 도 레 미 솔 라 위주의 쉬운 음. null은 쉼.
-  var MELODY = [
-    [76,1],[79,1],[76,1],[74,1],  [72,1],[74,1],[76,2],
-    [79,1],[81,1],[79,1],[76,1],  [74,1],[72,1],[74,2],
-    [81,1],[79,1],[76,1],[79,1],  [81,1],[79,1],[76,2],
-    [74,1],[76,1],[74,1],[72,1],  [74,1],[76,1],[72,2],
-    [null,2]
-  ];
-  var BASS = [48, 48, 53, 43, 53, 48, 43, 48];                  // 마디마다 받쳐 주는 낮은 음(도 도 파 솔 파 도 솔 도)
-  var LOOP = 34;                                                  // 한 바퀴 박자 수(8마디 32박 + 쉼 2박)
+  var VOLUME = 0.22;
 
-  var ctx = null, master = null, wave = null, noise = null;
-  var on = false, timer = null, loopStart = 0, bassStart = 0;      // 멜로디와 받침음은 각자 한 바퀴를 돌며 같은 길이(34박)로 맞물림
+  // ----- 곡 정의 -----
+  // melody = [음높이(MIDI 번호, null은 쉼), 박자, (악기 바꾸기: 엉뚱한 소리 넣을 때)]
+  // bass(마디번호) / drums(마디번호) = [[박 위치, 음 또는 북 종류, 세기, (악기)], ...]
+  var THEMES = {
+    // 기본 곡: 빠르고(152BPM) 통통 튀는 리코더 + 북. 마디 끝마다 북이 와르르 굴러가는 우당탕 느낌
+    base: { bpm: 152, barBeats: 4, tail: 0, voice: "recorder", bassVoice: "pluck",
+      melody: [
+        [72,.5],[76,.5],[79,.5],[76,.5],[84,1],[79,1],     [81,.5],[79,.5],[76,.5],[79,.5],[74,1],[null,1],
+        [72,.5],[76,.5],[79,.5],[76,.5],[84,1],[81,1],     [79,.5],[76,.5],[74,.5],[72,.5],[72,2],
+        [74,.5],[74,.5],[77,.5],[81,.5],[79,1],[76,1],     [76,.5],[76,.5],[79,.5],[83,.5],[81,1],[79,1],
+        [84,.5],[83,.5],[81,.5],[79,.5],[76,.5],[74,.5],[72,.5],[74,.5],     [72,1],[null,1],[72,.5],[72,.5],[72,1]],
+      bass: function (b) { var r = [48,48,48,43,50,52,48,48][b]; return [[0, r, .2], [1, r + 12, .1], [2, r + 7, .14], [3, r + 12, .1]]; },
+      drums: function (b) {
+        var d = [[0,"kick",.9],[1,"snare",.6],[2,"kick",.8],[3,"snare",.6]], i;
+        for (i = 0; i < 8; i++) d.push([i * .5, "hat", i % 2 ? .22 : .32]);
+        if (b === 0) d.push([0, "crash", .45]);
+        if (b === 3) { d.pop(); d.pop(); d.push([3,"tom1",.7],[3.25,"tom1",.6],[3.5,"tom2",.7],[3.75,"tom3",.8]); }
+        if (b === 7) { d.push([3,"snare",.5],[3.25,"snare",.55],[3.5,"snare",.65],[3.75,"snare",.75],[3.875,"tom3",.8]); }
+        return d; } },
+
+    // 쑝이(아기 새): 짹짹 떨리는 소리(트릴)와 갑자기 높이 치솟는 소리, 끝에 뿅! 소리
+    0: { bpm: 144, barBeats: 4, tail: 0, voice: "chirp", bassVoice: "pluck",
+      melody: [
+        [79,.25],[83,.25],[79,.25],[83,.25],[86,1],[null,.5],[74,.5],[79,1],
+        [83,.5],[81,.5],[79,.5],[76,.5],[74,1],[null,1],
+        [79,.25],[83,.25],[79,.25],[83,.25],[88,1],[86,.5],[83,.5],[79,1],
+        [81,.5],[79,.5],[76,.5],[74,.5],[79,1],[67,1,"boing"],
+        [74,.5],[74,.5],[null,.5],[74,.5],[79,1],[83,1],
+        [86,.5],[83,.5],[86,.5],[83,.5],[79,.5],[null,.5],[76,.5],[74,.5],
+        [79,.25],[83,.25],[79,.25],[83,.25],[88,.5],[null,.5],[88,.5],[null,.5],[86,1],
+        [83,.5],[81,.5],[79,.5],[76,.5],[79,1],[null,.5],[79,.5]],
+      bass: function (b) { var r = [43,43,43,43,50,43,48,43][b]; return [[0, r, .18], [1, r + 12, .1], [2, r + 7, .14], [3, r + 12, .1]]; },
+      drums: function (b) { return [[0,"kick",.7],[1,"wood",.5],[2,"kick",.6],[2.5,"kick",.5],[3,"wood",.5],[.5,"hat",.2],[1.5,"hat",.2],[3.5,"hat",.2]]; } },
+
+    // 몽이(토끼): 어긋난 박자로 폴짝폴짝, 마림바 + 뿅뿅 튀는 소리 + 카우벨
+    1: { bpm: 148, barBeats: 4, tail: 0, voice: "marimba", bassVoice: "pluck",
+      melody: [
+        [77,.5],[null,.5],[77,.5],[81,.5],[84,.5],[81,.5],[77,1],
+        [74,.5],[null,.5],[74,.5],[77,.5],[81,1],[null,.5],[72,.5,"boing"],
+        [72,.25],[74,.25],[76,.25],[77,.25],[79,.5],[81,.5],[84,1],[null,1],
+        [81,.5],[79,.5],[77,.5],[76,.5],[77,1],[77,.5],[77,.5],
+        [79,.5],[null,.5],[79,.5],[83,.5],[86,.5],[83,.5],[79,1],
+        [77,.5],[null,.5],[77,.5],[81,.5],[84,1],[null,.5],[84,.5],
+        [72,.25],[77,.25],[81,.25],[84,.25],[81,.25],[77,.25],[72,.25],[null,.25],[77,1],[null,1],
+        [84,.5],[81,.5],[77,.5],[72,.5],[77,2,"boing"]],
+      bass: function (b) { var r = [41,46,41,48,43,41,48,41][b]; return [[0, r, .2], [1.5, r + 7, .12], [2, r, .16], [3.5, r + 7, .12]]; },
+      drums: function (b) { return [[0,"kick",.8],[1,"cow",.35],[2,"kick",.7],[3,"cow",.35],[.5,"hat",.2],[1.5,"hat",.2],[2.5,"hat",.2],[3.5,"hat",.2]]; } },
+
+    // 콩이(곰): 3박자로 뒤뚱뒤뚱, 투바 쿵짝짝 + 카주 소리, 끝에 하품하듯 미끄러져 내려감
+    2: { bpm: 120, barBeats: 3, tail: 0, voice: "kazoo", bassVoice: "pluck",
+      melody: [
+        [72,1],[76,1],[79,1],
+        [81,1],[79,.5],[76,.5],[72,1],
+        [74,1],[77,1],[81,1],
+        [79,1.5],[76,.5],[72,1],
+        [72,.5],[72,.5],[76,.5],[79,.5],[84,1],
+        [83,1],[81,.5],[79,.5],[76,1],
+        [77,.5],[79,.5],[81,.5],[79,.5],[77,.5],[76,.5],
+        [72,2],[67,1,"slide"]],
+      bass: function (b) { var r = [48,48,50,48,48,43,53,48][b]; return [[0, r - 12, .3, "tuba"], [1, r + 7, .13], [2, r + 7, .13]]; },
+      drums: function (b) { return [[0,"kick",.8],[1,"wood",.45],[2,"wood",.45]]; } },
+
+    // 별이(밤하늘 고양이): 톡톡 튀는 소리 + 야옹~ 하는 미끄러지는 소리, 수상하고 엉뚱한 분위기
+    3: { bpm: 132, barBeats: 4, tail: 0, voice: "pizz", bassVoice: "harp",
+      melody: [
+        [81,.5],[null,.5],[81,.5],[79,.5],[76,.5],[null,.5],[72,1],
+        [74,.5],[76,.5],[74,.5],[72,.5],[69,1],[null,.5],[null,.5],
+        [72,.25],[76,.25],[81,.25],[76,.25],[72,.25],[76,.25],[81,.25],[76,.25],[84,1],[null,1],
+        [83,.5],[81,.5],[79,.5],[76,.5],[81,1,"meow"],[null,1],
+        [81,.5],[null,.5],[81,.5],[79,.5],[76,.5],[null,.5],[72,1],
+        [74,.5],[76,.5],[77,.5],[76,.5],[74,.5],[72,.5],[69,1],
+        [69,.25],[72,.25],[76,.25],[81,.25],[84,.5],[81,.5],[76,.5],[72,.5],[69,1],
+        [76,.5],[null,.5],[76,.5],[null,.5],[81,1,"meow"],[null,1]],
+      bass: function (b) { var r = [45,45,48,43,45,41,45,45][b]; return [[0, r, .12], [1, r + 7, .09], [2, r + 12, .09], [3, r + 7, .09]]; },
+      drums: function (b) { return [[0,"kick",.6],[1.5,"wood",.4],[3.5,"wood",.4],[1,"hat",.2],[2,"hat",.2],[3,"hat",.2]]; } }
+  };
+  var PET_THEME = [0, 1, 2, 3];
+
+  var ctx = null, master = null, waveR = null, waveF = null, noise = null;
+  var on = false, timer = null, startedByPet = false, petIndex = -1, run = null, switching = null;
 
   function hz(m) { return 440 * Math.pow(2, (m - 69) / 12); }
   function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -603,97 +675,201 @@ var Flow = (function () {
   function setup() {
     ctx = new AC();
     master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
-    var imag = new Float32Array([0, 1, 0.14, 0.3, 0.04, 0.07]);   // 리코더처럼 맑고 둥근 소리(기본음이 강하고 배음은 약하게)
-    wave = ctx.createPeriodicWave(new Float32Array(imag.length), imag);
-    var len = ctx.sampleRate;                                       // 숨소리용 잡음 1초
+    waveR = ctx.createPeriodicWave(new Float32Array(6), new Float32Array([0, 1, 0.14, 0.3, 0.04, 0.07]));   // 리코더: 맑고 둥근 소리
+    waveF = ctx.createPeriodicWave(new Float32Array(4), new Float32Array([0, 1, 0.2, 0.05]));              // 플루트: 더 부드러운 소리
+    var len = ctx.sampleRate;
     noise = ctx.createBuffer(1, len, ctx.sampleRate);
     var d = noise.getChannelData(0);
     for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
   }
 
-  function recorder(m, t, dur) {                                   // 리코더 한 음
-    var f = hz(m), end = t + dur;
-    var o = ctx.createOscillator(); o.setPeriodicWave(wave);
-    o.detune.value = rnd(-8, 8);                                    // 아이가 부는 듯 음이 살짝 흔들림
-    o.frequency.setValueAtTime(f * 0.972, t);                       // 처음에 살짝 낮게 시작했다가
-    o.frequency.linearRampToValueAtTime(f, t + 0.08);               // 제 음으로 올라옴
+  function tone(type, f, t, dur, peak, atk, decayTau) {            // 기본 소리 한 개 (시작 → 줄어듦)
+    var o = ctx.createOscillator();
+    if (type === "R") o.setPeriodicWave(waveR); else if (type === "F") o.setPeriodicWave(waveF); else o.type = type;
+    o.frequency.value = f;
     var g = ctx.createGain();
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.85, t + 0.06);
-    g.gain.setTargetAtTime(0.62, t + 0.12, 0.12);
-    g.gain.setValueAtTime(0.62, end - 0.06);
-    g.gain.linearRampToValueAtTime(0, end + 0.05);
+    g.gain.linearRampToValueAtTime(peak, t + atk);
+    g.gain.setTargetAtTime(0.0001, t + atk, decayTau);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur);
+    return o;
+  }
+  function hiss(t, vol, ftype, freq, q, decay, dur) {               // 잡음 소리(북 · 심벌에 씀)
+    var n = ctx.createBufferSource(); n.buffer = noise;
+    var fl = ctx.createBiquadFilter(); fl.type = ftype; fl.frequency.value = freq; fl.Q.value = q;
+    var ng = ctx.createGain();
+    ng.gain.setValueAtTime(vol, t); ng.gain.exponentialRampToValueAtTime(0.002, t + decay);
+    n.connect(fl); fl.connect(ng); ng.connect(master); n.start(t, rnd(0, 0.5), dur);
+  }
+  function breath(t, vol) {                                         // 리코더 숨소리
+    var n = ctx.createBufferSource(); n.buffer = noise;
+    var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 3000; bp.Q.value = 0.8;
+    var ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.0001, t); ng.gain.linearRampToValueAtTime(vol, t + 0.03); ng.gain.exponentialRampToValueAtTime(0.004, t + 0.22);
+    n.connect(bp); bp.connect(ng); ng.connect(master); n.start(t, rnd(0, 0.5), 0.3);
+  }
+  function sustained(wave, m, t, dur, peak, atkWant, vib) {         // 길게 끄는 관악기 소리
+    var f = hz(m), end = t + dur, atk = Math.min(atkWant, dur * 0.35);
+    var o = ctx.createOscillator(); o.setPeriodicWave(wave);
+    o.detune.value = rnd(-8, 8);
+    o.frequency.setValueAtTime(f * 0.972, t); o.frequency.linearRampToValueAtTime(f, t + 0.06);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(peak, t + atk);
+    g.gain.setTargetAtTime(peak * 0.72, t + atk + 0.04, 0.1);
+    g.gain.setValueAtTime(peak * 0.72, Math.max(t + atk + 0.05, end - 0.05));
+    g.gain.linearRampToValueAtTime(0, end + 0.04);
     o.connect(g); g.connect(master);
-    if (dur > 0.9) {                                                // 긴 음은 끝으로 갈수록 가늘게 떨림(비브라토)
+    if (vib && dur > 0.9) {
       var lfo = ctx.createOscillator(), lg = ctx.createGain();
-      lfo.frequency.value = 5.2; lg.gain.setValueAtTime(0, t);
-      lg.gain.linearRampToValueAtTime(f * 0.004, t + dur * 0.8);
+      lfo.frequency.value = 5.2; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * 0.004, t + dur * 0.8);
       lfo.connect(lg); lg.connect(o.frequency); lfo.start(t); lfo.stop(end + 0.1);
     }
     o.start(t); o.stop(end + 0.1);
-    var n = ctx.createBufferSource(); n.buffer = noise;             // 숨소리
-    var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 3000; bp.Q.value = 0.8;
-    var ng = ctx.createGain();
-    ng.gain.setValueAtTime(0.0001, t); ng.gain.linearRampToValueAtTime(0.05, t + 0.03); ng.gain.exponentialRampToValueAtTime(0.004, t + 0.22);
-    n.connect(bp); bp.connect(ng); ng.connect(master); n.start(t, rnd(0, 0.5), 0.3);
+  }
+  function glide(m, t, peak, steps, total) {                        // 음이 미끄러지는 엉뚱한 소리(뿅 · 야옹 · 하품)
+    var f = hz(m), o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(f * steps[0][1], t);
+    steps.forEach(function (s) { o.frequency.exponentialRampToValueAtTime(f * s[1], t + s[0]); });
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.03);
+    g.gain.setValueAtTime(peak, t + total * 0.7); g.gain.linearRampToValueAtTime(0, t + total);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + total + 0.05);
+    var o2 = ctx.createOscillator(), g2 = ctx.createGain();           // 한 옥타브 위 소리를 살짝 섞어 코맹맹이 느낌
+    o2.type = "triangle"; o2.frequency.setValueAtTime(f * 2 * steps[0][1], t);
+    steps.forEach(function (s) { o2.frequency.exponentialRampToValueAtTime(f * 2 * s[1], t + s[0]); });
+    g2.gain.setValueAtTime(0, t); g2.gain.linearRampToValueAtTime(peak * 0.3, t + 0.03); g2.gain.linearRampToValueAtTime(0, t + total);
+    o2.connect(g2); g2.connect(master); o2.start(t); o2.stop(t + total + 0.05);
   }
 
-  function pluck(m, t, vol) {                                      // 낮은 받침음(통통 튀는 짧은 소리)
-    var o = ctx.createOscillator(); o.type = "triangle"; o.frequency.value = hz(m);
-    var g = ctx.createGain();
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
-    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.6);
-  }
+  var VOICES = {                                                     // 멜로디 악기들
+    recorder: function (m, t, d) { sustained(waveR, m, t, d, 0.85, 0.05, true); breath(t, 0.05); },
+    flute:    function (m, t, d) { sustained(waveF, m, t, d, 0.7, 0.16, true); breath(t, 0.03); },
+    chirp:    function (m, t, d) {                                   // 새소리: 짧게 위로 휙 올라가는 휘파람
+      var f = hz(m), dd = Math.min(d, 0.26);
+      var o = tone("sine", f, t, dd + 0.1, 0.8, 0.012, 0.07);
+      o.frequency.setValueAtTime(f * 0.93, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.05);
+      tone("sine", f * 2, t, dd + 0.1, 0.12, 0.012, 0.05);
+    },
+    marimba:  function (m, t, d) { var f = hz(m); tone("sine", f, t, 0.7, 0.9, 0.004, 0.11); tone("sine", f * 4, t, 0.3, 0.22, 0.003, 0.03); },
+    pizz:     function (m, t, d) { var f = hz(m); var o = tone("triangle", f, t, 0.3, 0.85, 0.004, 0.06); o.frequency.setValueAtTime(f * 1.04, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.03); tone("sine", f * 3, t, 0.15, 0.12, 0.003, 0.03); },
+    kazoo:    function (m, t, d) {                                   // 카주: 코맹맹이 소리
+      var f = hz(m), end = t + d * 0.95;
+      var o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = rnd(-10, 10);
+      var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1500; bp.Q.value = 1.4;
+      var g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.55, t + 0.03);
+      g.gain.setValueAtTime(0.55, Math.max(t + 0.04, end - 0.05)); g.gain.linearRampToValueAtTime(0, end + 0.03);
+      var lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 6; lg.gain.value = f * 0.012;
+      lfo.connect(lg); lg.connect(o.frequency); lfo.start(t); lfo.stop(end + 0.1);
+      o.connect(bp); bp.connect(g); g.connect(master); o.start(t); o.stop(end + 0.1);
+    },
+    boing:    function (m, t, d) { glide(m, t, 0.6, [[0.09, 2.2], [0.3, 0.75]], 0.34); },        // 뿅~ (올라갔다 처짐)
+    meow:     function (m, t, d) { glide(m, t, 0.5, [[0.12, 1.5], [0.4, 0.85]], 0.46); },        // 야옹~
+    slide:    function (m, t, d) { glide(m, t, 0.6, [[0.9, 0.5]], 0.9); }                        // 하품하듯 주르륵 내려감
+  };
+  var BASSES = {                                                     // 받침 악기들
+    pluck: function (m, t, v) { tone("triangle", hz(m), t, 0.7, v, 0.02, 0.16); },
+    tuba:  function (m, t, v) { tone("triangle", hz(m), t, 0.5, v * 1.5, 0.02, 0.12); tone("sawtooth", hz(m), t, 0.4, v * 0.2, 0.02, 0.08); },
+    pad:   function (m, t, v) { tone("sine", hz(m), t, 3.2, v, 0.5, 0.9); },
+    harp:  function (m, t, v) { var f = hz(m); tone("sine", f, t, 1.2, v * 1.6, 0.006, 0.25); tone("sine", f * 2, t, 0.6, v * 0.5, 0.006, 0.1); }
+  };
+  function tom(f0, t, v) { var o = tone("sine", f0, t, 0.35, v, 0.003, 0.09); o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 0.55, t + 0.16); }
+  var DRUMS = {                                                      // 북 소리들(우당탕 느낌)
+    kick:  function (t, v) { var o = tone("sine", 150, t, 0.3, v, 0.002, 0.06); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.12); },
+    snare: function (t, v) { hiss(t, v * 0.8, "bandpass", 1900, 0.7, 0.16, 0.25); tone("triangle", 190, t, 0.12, v * 0.4, 0.002, 0.04); },
+    hat:   function (t, v) { hiss(t, v * 0.6, "highpass", 7500, 0.7, 0.05, 0.1); },
+    wood:  function (t, v) { tone("triangle", 900, t, 0.1, v, 0.002, 0.025); tone("sine", 1350, t, 0.08, v * 0.4, 0.002, 0.02); },   // 딱딱 나무토막
+    cow:   function (t, v) { tone("square", 560, t, 0.25, v * 0.35, 0.002, 0.08); tone("square", 845, t, 0.25, v * 0.35, 0.002, 0.08); },   // 땡땡 카우벨
+    tom1:  function (t, v) { tom(220, t, v); },
+    tom2:  function (t, v) { tom(165, t, v); },
+    tom3:  function (t, v) { tom(120, t, v); },
+    crash: function (t, v) { hiss(t, v * 0.7, "highpass", 3500, 0.5, 0.9, 1); }
+  };
 
-  // 앞으로 0.4초 안에 울릴 음들을 미리 예약한다(끊기지 않게 반복)
-  var evs = [], pos = 0;
-  (function build() {
-    MELODY.forEach(function (n) {
-      if (n[0] !== null) evs.push({ at: pos, m: n[0], d: n[1] * BEAT * 0.9 });
-      pos += n[1];
+  // 곡 하나를 시간표(언제 · 어떤 음)로 바꿔 둠
+  function build(th) {
+    var mel = [], bas = [], drm = [], pos = 0, bars, b;
+    th.melody.forEach(function (n) { if (n[0] !== null) mel.push({ at: pos, m: n[0], d: n[1], vo: n[2] }); pos += n[1]; });
+    bars = Math.round(pos / th.barBeats);
+    for (b = 0; b < bars; b++) {
+      th.bass(b).forEach(function (x) { bas.push({ at: b * th.barBeats + x[0], m: x[1], v: x[2], vo: x[3] }); });
+      if (th.drums) th.drums(b).forEach(function (x) { drm.push({ at: b * th.barBeats + x[0], k: x[1], v: x[2] }); });
+    }
+    drm.sort(function (p, q) { return p.at - q.at; });
+    return { th: th, lists: { mel: mel, bas: bas, drm: drm }, loop: pos + th.tail, beat: 60 / th.bpm };
+  }
+  var BUILT = {};
+  function getTheme(key) { return BUILT[key] || (BUILT[key] = build(THEMES[key])); }
+
+  function pump() {                                                  // 앞으로 0.4초 안에 울릴 음들을 예약
+    var now = ctx.currentTime, horizon = now + 0.4, T = run.t;
+    Object.keys(T.lists).forEach(function (name) {
+      var list = T.lists[name], st = run.s[name];
+      if (!list.length) return;
+      while (true) {
+        var e = list[st.i];
+        var t = st.start + e.at * T.beat + (name === "mel" ? rnd(-0.012, 0.02) : 0);   // 박자도 사람처럼 아주 조금 어긋남
+        if (t > horizon) break;
+        if (t >= now - 0.05) {
+          t = Math.max(t, now);
+          if (name === "mel") VOICES[e.vo || T.th.voice](e.m, t, e.d * T.beat * 0.9);
+          else if (name === "bas") BASSES[e.vo || T.th.bassVoice](e.m, t, e.v);
+          else DRUMS[e.k](t, e.v);
+        }
+        st.i++;
+        if (st.i >= list.length) { st.i = 0; st.start += T.loop * T.beat; }
+      }
     });
-  })();
-  var melodyI = 0, bassBar = 0;
-  function pump() {
-    var now = ctx.currentTime, horizon = now + 0.4;
-    while (true) {
-      var e = evs[melodyI];
-      var t = loopStart + e.at * BEAT + rnd(-0.012, 0.02);         // 박자도 사람처럼 아주 조금 어긋남
-      if (t > horizon) break;
-      if (t >= now - 0.05) recorder(e.m, Math.max(t, now), e.d);
-      melodyI++;
-      if (melodyI >= evs.length) { melodyI = 0; loopStart += LOOP * BEAT; }
-    }
-    while (true) {                                                 // 받침음: 마디의 1박 · 3박
-      var barIdx = Math.floor(bassBar / 2), half = bassBar % 2;
-      if (barIdx >= BASS.length) { bassBar = 0; bassStart += LOOP * BEAT; continue; }   // 한 바퀴 끝나면 처음부터
-      var bt = bassStart + (barIdx * 4 + half * 2) * BEAT;
-      if (bt > horizon) break;
-      if (bt >= now - 0.05) pluck(BASS[barIdx] + (half ? 7 : 0), Math.max(bt, now), half ? 0.1 : 0.16);
-      bassBar++;
-    }
   }
 
+  function begin(key) {                                              // 이 곡을 처음부터 연주 시작
+    var T = getTheme(key), t0 = ctx.currentTime + 0.15;
+    run = { t: T, s: { mel: { i: 0, start: t0 }, bas: { i: 0, start: t0 }, drm: { i: 0, start: t0 } } };
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.setTargetAtTime(VOLUME, ctx.currentTime, 0.25);      // 천천히 커짐
+    clearInterval(timer); timer = setInterval(pump, 80); pump();
+  }
+  function currentKey() { return petIndex >= 0 ? PET_THEME[petIndex] : "base"; }
+  function paint() {
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.setAttribute("aria-label", on ? "배경음악 끄기" : "배경음악 켜기");
+    btn.title = on ? "배경음악 끄기" : "배경음악 켜기";
+  }
   function start() {
     if (!ctx) setup();
-    ctx.resume();
-    on = true; melodyI = 0; bassBar = 0; loopStart = bassStart = ctx.currentTime + 0.15;
-    master.gain.cancelScheduledValues(ctx.currentTime);
-    master.gain.setTargetAtTime(VOLUME, ctx.currentTime, 0.3);      // 천천히 커짐
-    timer = setInterval(pump, 80); pump();
-    btn.setAttribute("aria-pressed", "true"); btn.setAttribute("aria-label", "배경음악 끄기"); btn.title = "배경음악 끄기";
+    ctx.resume(); on = true; begin(currentKey()); paint();
   }
   function stop() {
-    on = false; clearInterval(timer);
+    on = false; clearInterval(timer); clearTimeout(switching);
     master.gain.cancelScheduledValues(ctx.currentTime);
-    master.gain.setTargetAtTime(0, ctx.currentTime, 0.12);          // 천천히 작아짐
+    master.gain.setTargetAtTime(0, ctx.currentTime, 0.12);           // 천천히 작아짐
     setTimeout(function () { if (!on) ctx.suspend(); }, 700);
-    btn.setAttribute("aria-pressed", "false"); btn.setAttribute("aria-label", "배경음악 켜기"); btn.title = "배경음악 켜기";
+    paint();
   }
-  btn.addEventListener("click", function () { if (on) stop(); else start(); });
-  document.addEventListener("visibilitychange", function () {       // 다른 탭으로 가면 멈췄다가 돌아오면 이어서
+  function change() {                                                // 곡 바꾸기: 소리를 잠깐 줄였다가 새 곡으로
+    clearTimeout(switching);
+    clearInterval(timer);
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.setTargetAtTime(0, ctx.currentTime, 0.06);
+    switching = setTimeout(function () { if (on) begin(currentKey()); }, 450);
+  }
+
+  btn.addEventListener("click", function () { startedByPet = false; if (on) stop(); else start(); });
+  document.addEventListener("visibilitychange", function () {        // 다른 탭에서는 멈췄다가 돌아오면 이어서
     if (!on || !ctx) return;
     if (document.hidden) ctx.suspend(); else ctx.resume();
+  });
+  // 첫 화면 캐릭터를 포인터로 고르거나(index 0~3) 돌려놓으면(-1) 알려 줌
+  document.addEventListener("pet-change", function (e) {
+    var idx = e.detail.index;
+    if (idx >= 0) {
+      petIndex = idx;
+      if (!on) { startedByPet = true; start(); } else change();      // 꺼져 있었으면 캐릭터 곡으로 켬
+    } else {
+      petIndex = -1;
+      if (startedByPet) { startedByPet = false; if (on) stop(); }    // 캐릭터 때문에 켠 거면 함께 끔
+      else if (on) change();                                         // 원래 켜져 있었으면 기본 곡으로 돌아옴
+    }
   });
 })();
 
