@@ -386,52 +386,96 @@ document.documentElement.classList.add('js');
   }, { passive: true });
 })();
 
-// 첫 화면: 스크롤을 내리면 부드럽게 많이 작아지며 올라가고, HELLO!만 헤더 바로 밑에 헤더보다 조금 큰 크기로 남는다.
+// 스크롤 제목 모으기: 첫 화면은 작아지며 올라가고, HELLO!와 NEWS · WORKS · FRIENDS · ABOUT 제목이
+// 차례로 작아지면서 헤더 밑에 한 줄로 쌓여 남는다. (글자 크기 · 간격은 아래 숫자에서 고침)
 (function () {
   var hero = document.querySelector(".hero");
   var wrap = hero && hero.querySelector(".wrap");
   var word = hero && hero.querySelector(".hello-word");
   var dock = document.getElementById("helloDock");
   var nav = document.querySelector(".nav");
+  // 작아지고 흐려지는 것은 글자뿐(제목 · 소개 · 안내 글). 캐릭터 칸과 집 · 나무 그림은 그대로 둠
+  var texts = hero ? Array.prototype.slice.call(hero.querySelectorAll(".en-title, .lead, .hint")) : [];
   if (!wrap || !word || !dock) return;
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  var ticking = false, m = null;
-  var END_FS = 24;                         // 남는 HELLO!의 글자 크기(헤더 로고는 16~20px)
 
-  function measure() {                     // 맨 위에 있을 때의 HELLO! 자리와 크기를 잰다
-    var t = wrap.style.transform, o = wrap.style.opacity;
-    wrap.style.transform = ""; wrap.style.opacity = "";
+  var GAP = 10;                                   // 남은 제목들 사이 간격(px)
+  var ids = ["news", "works", "friends", "about"];
+  var items = [];                                 // 구역 제목들: { h, dock, T, L, fs, w, endLeft }
+  ids.forEach(function (id) {
+    var h = document.querySelector("#" + id + " h2.en-title");
+    if (!h) return;
+    var d = document.createElement("div");
+    d.className = "hello-dock"; d.setAttribute("aria-hidden", "true"); d.textContent = h.textContent.trim();
+    document.body.appendChild(d);
+    items.push({ h: h, dock: d });
+  });
+  var ticking = false, m = null, endFs = 24;
+
+  function docPos(el) { var t = 0, l = 0; while (el) { t += el.offsetTop; l += el.offsetLeft; el = el.offsetParent; } return { t: t, l: l }; }
+  function textW(d, fs) { d.style.fontSize = fs + "px"; return d.getBoundingClientRect().width - 16; }   // 좌우 안쪽 여백 8px씩 뺌
+
+  function measure() {                            // 제자리 크기 · 위치와 남았을 때의 자리를 미리 계산
+    var saved = texts.map(function (e) { return [e.style.transform, e.style.opacity]; });
+    texts.forEach(function (e) { e.style.transform = ""; e.style.opacity = ""; });
     var r = word.getBoundingClientRect();
     m = { left: r.left, top: r.top + window.scrollY, fs: parseFloat(getComputedStyle(word).fontSize) };
-    wrap.style.transform = t; wrap.style.opacity = o;
+    texts.forEach(function (e, i) {
+      e.style.transform = saved[i][0]; e.style.opacity = saved[i][1];
+      // 글자들이 같은 점(첫 화면 맨 위 가운데)을 기준으로 줄어들게 맞춤
+      e.style.transformOrigin = (hero.offsetWidth / 2 - e.offsetLeft) + "px " + (-e.offsetTop) + "px";
+    });
+    endFs = window.innerWidth <= 700 ? 13 : 24;   // 남는 글자 크기: 컴퓨터 24px · 휴대폰 13px(헤더 로고보다 조금 큼)
+    var x = m.left + textW(dock, m.fs) * endFs / m.fs + GAP;
+    items.forEach(function (it) {
+      var p = docPos(it.h);
+      it.T = p.t; it.L = p.l; it.fs = parseFloat(getComputedStyle(it.h).fontSize);
+      it.endLeft = x;
+      x += textW(it.dock, it.fs) * endFs / it.fs + GAP;
+    });
   }
+  function lerp(a, b, q) { return a + (b - a) * q; }
+  function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+
   function apply() {
     ticking = false;
     if (!m) measure();
-    var y = window.scrollY, h = Math.max(1, hero.offsetHeight);
-    var p = Math.max(0, Math.min(1, y / h));
-    if (p === 0) {
-      wrap.style.transform = ""; wrap.style.opacity = ""; wrap.style.visibility = "";
-      word.style.visibility = ""; dock.style.opacity = 0;
-      return;
-    }
-    // HELLO!이 헤더 밑에 닿는 시점(q=1)에 나머지 글자(날짜 · WELCOME TO · PLAYGROUND)는 완전히 올라가 사라짐
-    var q = Math.max(0, Math.min(1, y / (h * 0.7)));
-    wrap.style.transform = "translateY(" + (-p * 150).toFixed(1) + "px) scale(" + (1 - q * 0.4).toFixed(3) + ")";
-    wrap.style.opacity = (1 - q).toFixed(3);
-    wrap.style.visibility = q >= 1 ? "hidden" : "";
-    // HELLO!: 원래 자리에서 출발해 헤더 밑 자리로 작아지며 이동
+    var y = window.scrollY, vh = window.innerHeight, h = Math.max(1, hero.offsetHeight);
     var endTop = (nav ? nav.offsetHeight : 50) + 6;
-    word.style.visibility = "hidden";
-    dock.style.opacity = 1;
-    dock.style.left = m.left + "px";
-    dock.style.top = ((1 - q) * (m.top - y) + q * endTop).toFixed(1) + "px";
-    dock.style.fontSize = (m.fs + (END_FS - m.fs) * q).toFixed(1) + "px";
+
+    // 구역 제목: 화면 위쪽 35%에 들어오면 작아지며 헤더 밑 자리로 이동
+    items.forEach(function (it) {
+      var vp = it.T - y;                          // 제목의 지금 화면 위치
+      var q = clamp01((vh * 0.35 - vp) / (vh * 0.35 - endTop));
+      if (q <= 0) { it.h.style.visibility = ""; it.dock.style.opacity = 0; return; }
+      it.h.style.visibility = "hidden";
+      it.dock.style.opacity = 1;
+      it.dock.style.left = lerp(it.L, it.endLeft, q).toFixed(1) + "px";
+      it.dock.style.top = lerp(vp, endTop, q).toFixed(1) + "px";
+      it.dock.style.fontSize = lerp(it.fs, endFs, q).toFixed(1) + "px";
+    });
+
+    // 첫 화면 글자: 작아지며 올라가 사라지고, 다 사라지면 작은 HELLO!가 헤더 밑에 통통 튀며 나타남
+    var p = clamp01(y / h);
+    var q0 = clamp01(y / (h * 0.6));
+    texts.forEach(function (e) {
+      if (p === 0) { e.style.transform = ""; e.style.opacity = ""; return; }
+      e.style.transform = "translateY(" + (-p * 150).toFixed(1) + "px) scale(" + (1 - q0 * 0.4).toFixed(3) + ")";
+      e.style.opacity = (1 - q0).toFixed(3);
+    });
+    if (q0 >= 1) {
+      dock.style.left = m.left + "px"; dock.style.top = endTop + "px"; dock.style.fontSize = endFs + "px";
+      dock.classList.add("pop");
+    } else {
+      dock.classList.remove("pop");
+    }
   }
+  function remeasure() { m = null; apply(); }
   window.addEventListener("scroll", function () {
     if (!ticking) { ticking = true; requestAnimationFrame(apply); }
   }, { passive: true });
-  window.addEventListener("resize", function () { m = null; apply(); });
-  window.addEventListener("load", function () { m = null; apply(); });
+  window.addEventListener("resize", remeasure);
+  window.addEventListener("load", remeasure);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
   apply();
 })();
