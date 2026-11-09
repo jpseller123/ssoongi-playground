@@ -95,15 +95,17 @@ ul { list-style: none; }
 .hero .wrap { max-width: none; padding-inline: max(var(--side), calc((100% - var(--max)) / 2)); }
 .hero .en-title { font-size: clamp(40px, 8.4vw, 100px); }
 .hero .en-title span { display: block; }
-/* 한 단어만 코랄 형광펜 효과: 밑줄 띠의 두께(--band)가 두꺼워졌다 얇아졌다 함. 띠의 아래쪽(92%)은 고정 */
-@property --band { syntax: "<percentage>"; inherits: false; initial-value: 30%; }
+/* 한 단어만 코랄 형광펜 효과: 물결 모양 띠가 옆으로 천천히 흘러서 두꺼워졌다 얇아졌다 하며 물결치는 것처럼 보임 */
 mark {
   color: inherit;
-  background: linear-gradient(transparent calc(92% - var(--band)), var(--coral) calc(92% - var(--band)), var(--coral) 92%, transparent 92%);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 48 20%27 preserveAspectRatio=%27none%27%3E%3Cpath d=%27M0 10 Q12 0 24 10 T48 10 V20 H0 Z%27 fill=%27%23F29B8B%27/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 56px 42%;        /* 물결 한 마디의 너비 · 띠의 높이 */
+  background-position: 0 90%;
   padding: 0 4px; margin: 0 -4px;
-  animation: band-breathe 3.2s ease-in-out infinite;   /* 천천히 숨 쉬듯 */
+  animation: wave-flow 5s linear infinite;   /* 5초에 한 마디만큼 천천히 흐름 */
 }
-@keyframes band-breathe { 0%, 100% { --band: 10%; } 50% { --band: 50%; } }
+@keyframes wave-flow { to { background-position: 56px 90%; } }
 @media (prefers-reduced-motion: reduce) { mark { animation: none; } }
 .lead { margin-top: 20px; font-size: 16px; max-width: 34em; }
 .hint {
