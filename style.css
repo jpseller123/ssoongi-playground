@@ -95,11 +95,16 @@ ul { list-style: none; }
 .hero .wrap { max-width: none; padding-inline: max(var(--side), calc((100% - var(--max)) / 2)); }
 .hero .en-title { font-size: clamp(40px, 8.4vw, 100px); }
 .hero .en-title span { display: block; }
-/* 한 단어만 코랄 형광펜 효과 */
+/* 한 단어만 코랄 형광펜 효과: 밑줄 띠의 두께(--band)가 두꺼워졌다 얇아졌다 함. 띠의 아래쪽(92%)은 고정 */
+@property --band { syntax: "<percentage>"; inherits: false; initial-value: 30%; }
 mark {
-  color: inherit; background: linear-gradient(transparent 62%, var(--coral) 62%, var(--coral) 92%, transparent 92%);
+  color: inherit;
+  background: linear-gradient(transparent calc(92% - var(--band)), var(--coral) calc(92% - var(--band)), var(--coral) 92%, transparent 92%);
   padding: 0 4px; margin: 0 -4px;
+  animation: band-breathe 3.2s ease-in-out infinite;   /* 천천히 숨 쉬듯 */
 }
+@keyframes band-breathe { 0%, 100% { --band: 10%; } 50% { --band: 50%; } }
+@media (prefers-reduced-motion: reduce) { mark { animation: none; } }
 .lead { margin-top: 20px; font-size: 16px; max-width: 34em; }
 .hint {
   display: none;                      /* 기본은 숨김: 휴대폰 · 터치에서는 안 보임 */ margin-top: 14px; font-size: 13px; font-weight: 700; line-height: 1.5;
