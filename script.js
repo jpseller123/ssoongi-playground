@@ -411,14 +411,16 @@ document.documentElement.classList.add('js');
     var y = window.scrollY, h = Math.max(1, hero.offsetHeight);
     var p = Math.max(0, Math.min(1, y / h));
     if (p === 0) {
-      wrap.style.transform = ""; wrap.style.opacity = "";
+      wrap.style.transform = ""; wrap.style.opacity = ""; wrap.style.visibility = "";
       word.style.visibility = ""; dock.style.opacity = 0;
       return;
     }
-    wrap.style.transform = "translateY(" + (-p * 90).toFixed(1) + "px) scale(" + (1 - p * 0.4).toFixed(3) + ")";
-    wrap.style.opacity = (1 - p * 0.75).toFixed(3);
-    // HELLO!: 원래 자리에서 출발해 헤더 밑 자리로 작아지며 이동
+    // HELLO!이 헤더 밑에 닿는 시점(q=1)에 나머지 글자(날짜 · WELCOME TO · PLAYGROUND)는 완전히 올라가 사라짐
     var q = Math.max(0, Math.min(1, y / (h * 0.7)));
+    wrap.style.transform = "translateY(" + (-p * 150).toFixed(1) + "px) scale(" + (1 - q * 0.4).toFixed(3) + ")";
+    wrap.style.opacity = (1 - q).toFixed(3);
+    wrap.style.visibility = q >= 1 ? "hidden" : "";
+    // HELLO!: 원래 자리에서 출발해 헤더 밑 자리로 작아지며 이동
     var endTop = (nav ? nav.offsetHeight : 50) + 6;
     word.style.visibility = "hidden";
     dock.style.opacity = 1;
