@@ -36,9 +36,9 @@ var Flow = (function () {
   items.forEach(function (el) { io.observe(el); });
 })();
 
-// NEWS 줄 · WORKS · FRIENDS 카드 · 첫 화면 제목 3줄 · 소개 문장 · 안내 글 · 집과 나무 띠 · 구역 제목(NEWS · WORKS · FRIENDS · ABOUT) · 첫 화면 캐릭터 · ABOUT · CONTACT 조각: 각 카드가 화면에 들어올 때 하나씩 아래에서 fade-up (같은 줄은 0.12초 간격으로 차례로)
+// NEWS 줄 · WORKS · FRIENDS 카드 · 첫 화면 제목 3줄 · 소개 문장 · 안내 글 · 집과 나무 띠 · 캐릭터 이름표 · 구역 제목(NEWS · WORKS · FRIENDS · ABOUT) · 첫 화면 캐릭터 · ABOUT · CONTACT 조각: 각 카드가 화면에 들어올 때 하나씩 아래에서 fade-up (같은 줄은 0.12초 간격으로 차례로)
 (function () {
-  var cards = document.querySelectorAll('.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town');
+  var cards = document.querySelectorAll('.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town, .arch-name');
   if (!('IntersectionObserver' in window)) {
     cards.forEach(function (el) { el.classList.add('up'); });
     return;
@@ -308,7 +308,7 @@ var Flow = (function () {
       var base = arch.offsetHeight;
       var mb = parseFloat(getComputedStyle(arch).marginBottom) || 0;
       var img = arch.querySelector('.cimg');
-      var floor = Math.max(base * SHRINK, (img ? img.offsetHeight : 0) + 30);   // 캐릭터가 잘리지 않을 만큼
+      var floor = Math.max(base * SHRINK, (img ? img.offsetHeight : 0) + 60);   // 캐릭터가 잘리지 않을 만큼
       info[i] = { base: base, min: floor, max: base * GROW, now: base };
       tallest = Math.max(tallest, base * GROW + mb);
     });
