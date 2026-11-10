@@ -269,6 +269,10 @@ mark {
 /* WORKS · FRIENDS 카드는 각자 화면에 들어올 때 하나씩 fade-up (script.js가 .up을 붙임) */
 .js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town):not(.up) { opacity: 0; }
 .js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town).up { animation: flow-up 1s cubic-bezier(.22, 1, .36, 1) backwards; }
+/* FRIENDS 카드 안의 이름 · 소개: 카드가 올라온 뒤 이어서 차례로 fade-up */
+.js .friend:not(.up) :is(h3, p) { opacity: 0; }
+.js .friend.up :is(h3, p) { animation: flow-up 1s cubic-bezier(.22, 1, .36, 1) backwards; animation-delay: calc(var(--d, 0s) + .3s); }
+.js .friend.up p { animation-delay: calc(var(--d, 0s) + .45s); }
 :is(.cards, .friend-grid, .news-box, .tags) > :nth-child(2) { --i: 1; }
 :is(.cards, .friend-grid, .news-box, .tags) > :nth-child(3) { --i: 2; }
 :is(.cards, .friend-grid, .news-box, .tags) > :nth-child(4) { --i: 3; }
@@ -303,6 +307,7 @@ mark {
   .js .reveal { opacity: 1; transform: none; transition: none; }
   .js .reveal :is(.card, .row, .friend, .tags li, .about-text, .profile) { opacity: 1 !important; animation: none !important; }
   .js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town) { opacity: 1 !important; animation: none !important; }
+  .js .friend :is(h3, p) { opacity: 1 !important; animation: none !important; }
   .card, .more, .arrow, .btn, .float, .to-top { transition: none; }
 }
 

@@ -47,7 +47,9 @@ var Flow = (function () {
     var n = 0;
     entries.forEach(function (e) {
       if (!e.isIntersecting) return;
-      e.target.style.animationDelay = (n++ * 0.12) + 's';
+      var d = (n++ * 0.12) + 's';
+      e.target.style.animationDelay = d;
+      e.target.style.setProperty('--d', d);   // 카드 안 글자(FRIENDS 이름 · 소개)가 카드 뒤에 이어서 올라오게
       e.target.classList.add('up');
       io.unobserve(e.target);
     });
