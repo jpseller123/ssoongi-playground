@@ -36,6 +36,25 @@ var Flow = (function () {
   items.forEach(function (el) { io.observe(el); });
 })();
 
+// WORKS · FRIENDS 카드: 각 카드가 화면에 들어올 때 하나씩 아래에서 fade-up (같은 줄은 0.12초 간격으로 차례로)
+(function () {
+  var cards = document.querySelectorAll('.card, .friend');
+  if (!('IntersectionObserver' in window)) {
+    cards.forEach(function (el) { el.classList.add('up'); });
+    return;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    var n = 0;
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      e.target.style.animationDelay = (n++ * 0.12) + 's';
+      e.target.classList.add('up');
+      io.unobserve(e.target);
+    });
+  }, { threshold: 0.15 });
+  cards.forEach(function (el) { io.observe(el); });
+})();
+
 // 맨 위 메뉴: 스크롤을 내리면 얇아진다(.slim 클래스, 모양은 style.css).
 (function () {
   var nav = document.querySelector(".nav");
