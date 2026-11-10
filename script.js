@@ -36,9 +36,9 @@ var Flow = (function () {
   items.forEach(function (el) { io.observe(el); });
 })();
 
-// NEWS 줄 · WORKS · FRIENDS 카드 · 구역 제목(NEWS · WORKS · FRIENDS · ABOUT) · 첫 화면 캐릭터 · ABOUT · CONTACT 조각: 각 카드가 화면에 들어올 때 하나씩 아래에서 fade-up (같은 줄은 0.12초 간격으로 차례로)
+// NEWS 줄 · WORKS · FRIENDS 카드 · 첫 화면 제목 3줄 · 구역 제목(NEWS · WORKS · FRIENDS · ABOUT) · 첫 화면 캐릭터 · ABOUT · CONTACT 조각: 각 카드가 화면에 들어올 때 하나씩 아래에서 fade-up (같은 줄은 0.12초 간격으로 차례로)
 (function () {
-  var cards = document.querySelectorAll('.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title');
+  var cards = document.querySelectorAll('.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *');
   if (!('IntersectionObserver' in window)) {
     cards.forEach(function (el) { el.classList.add('up'); });
     return;
