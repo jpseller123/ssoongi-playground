@@ -49,7 +49,7 @@ var Flow = (function () {
       if (!e.isIntersecting) return;
       var d = (n++ * 0.12) + 's';
       e.target.style.animationDelay = d;
-      e.target.style.setProperty('--d', d);   // 카드 안 글자(FRIENDS 이름 · 소개)가 카드 뒤에 이어서 올라오게
+      e.target.style.setProperty('--d', d);   // 카드 안 글자(제목 · 설명)가 카드 뒤에 이어서 올라오게
       e.target.classList.add('up');
       io.unobserve(e.target);
     });
