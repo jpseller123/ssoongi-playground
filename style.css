@@ -128,7 +128,8 @@ mark {
   overflow: hidden;
 }
 .arch .cimg { display: block; width: 100%; margin-bottom: 38px; }   /* 아래 이름표 자리를 비움 */
-.arch-name { position: absolute; left: 0; right: 0; bottom: 9px; margin: 0 auto; width: max-content; font-size: 12px; font-weight: 800; line-height: 1.5; padding: 1px 12px; border: var(--line); border-radius: 999px; background: var(--ivory); pointer-events: none; }
+.arch-name { position: absolute; left: 0; right: 0; bottom: 9px; margin: 0 auto; width: max-content; font-size: 12px; font-weight: 800; line-height: 1.5; padding: 1px 12px; border: var(--line); border-radius: 999px; background: var(--ivory); pointer-events: none; opacity: 0; transform: translateY(8px); transition: opacity .35s ease, transform .35s cubic-bezier(.22, 1, .36, 1); }   /* 평소엔 숨김 */
+.arch:hover .arch-name, .arch:focus-visible .arch-name { opacity: 1; transform: none; }   /* 마우스를 올리면 아래에서 떠오르며 나타남 */
 .cimg img { display: block; width: 100%; height: auto; }
 .a1 { height: 270px; background: var(--pastel-yellow); margin-bottom: 40px; }
 .a2 { height: 360px; background: var(--pastel-blue); max-width: 250px; }
@@ -266,8 +267,8 @@ mark {
 .js .reveal.in { opacity: 1; transform: none; }
 /* 구역 안의 조각들(카드 · 소식 줄 · 친구 · 태그)은 0.09초 간격으로 차례로 흘러 올라옴 */
 /* WORKS · FRIENDS 카드는 각자 화면에 들어올 때 하나씩 fade-up (script.js가 .up을 붙임) */
-.js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town, .arch-name):not(.up) { opacity: 0; }
-.js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town, .arch-name).up { animation: flow-up 1s cubic-bezier(.22, 1, .36, 1) backwards; }
+.js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town):not(.up) { opacity: 0; }
+.js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town).up { animation: flow-up 1s cubic-bezier(.22, 1, .36, 1) backwards; }
 :is(.cards, .friend-grid, .news-box, .tags) > :nth-child(2) { --i: 1; }
 :is(.cards, .friend-grid, .news-box, .tags) > :nth-child(3) { --i: 2; }
 :is(.cards, .friend-grid, .news-box, .tags) > :nth-child(4) { --i: 3; }
@@ -301,7 +302,7 @@ mark {
   html { scroll-behavior: auto; }
   .js .reveal { opacity: 1; transform: none; transition: none; }
   .js .reveal :is(.card, .row, .friend, .tags li, .about-text, .profile) { opacity: 1 !important; animation: none !important; }
-  .js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town, .arch-name) { opacity: 1 !important; animation: none !important; }
+  .js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town) { opacity: 1 !important; animation: none !important; }
   .card, .more, .arrow, .btn, .float, .to-top { transition: none; }
 }
 
