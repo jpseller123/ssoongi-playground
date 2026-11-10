@@ -270,9 +270,10 @@ mark {
 .js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town):not(.up) { opacity: 0; }
 .js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town).up { animation: flow-up 1s cubic-bezier(.22, 1, .36, 1) backwards; }
 /* NEWS · WORKS · FRIENDS 카드 안의 제목(이름) · 설명(날짜): 카드가 올라온 뒤 이어서 차례로 fade-up */
-.js :is(.friend, .card, .row):not(.up) :is(h3, p, strong, small) { opacity: 0; }
-.js :is(.friend, .card, .row).up :is(h3, p, strong, small) { animation: flow-up 1s cubic-bezier(.22, 1, .36, 1) backwards; animation-delay: calc(var(--d, 0s) + .3s); }
+.js :is(.friend, .card, .row):not(.up) :is(h3, p, strong, small, .sq) { opacity: 0; }
+.js :is(.friend, .card, .row).up :is(h3, p, strong, small, .sq) { animation: flow-up 1s cubic-bezier(.22, 1, .36, 1) backwards; animation-delay: calc(var(--d, 0s) + .3s); }
 .js :is(.friend, .card, .row).up :is(p, small) { animation-delay: calc(var(--d, 0s) + .45s); }
+.js .row.up .sq { animation-delay: calc(var(--d, 0s) + .15s); }   /* 썸네일이 먼저, 이어서 제목 · 날짜 */
 :is(.cards, .friend-grid, .news-box, .tags) > :nth-child(2) { --i: 1; }
 :is(.cards, .friend-grid, .news-box, .tags) > :nth-child(3) { --i: 2; }
 :is(.cards, .friend-grid, .news-box, .tags) > :nth-child(4) { --i: 3; }
@@ -307,7 +308,7 @@ mark {
   .js .reveal { opacity: 1; transform: none; transition: none; }
   .js .reveal :is(.card, .row, .friend, .tags li, .about-text, .profile) { opacity: 1 !important; animation: none !important; }
   .js :is(.card, .friend, .row, .profile, .about-text, .tags li, .contact .wrap > *, .arch, #news .en-title, #works .en-title, #friends .en-title, #about .en-title, .hero .en-title > *, .hero .lead, .hero .hint, .hero .town) { opacity: 1 !important; animation: none !important; }
-  .js :is(.friend, .card, .row) :is(h3, p, strong, small) { opacity: 1 !important; animation: none !important; }
+  .js :is(.friend, .card, .row) :is(h3, p, strong, small, .sq) { opacity: 1 !important; animation: none !important; }
   .card, .more, .arrow, .btn, .float, .to-top { transition: none; }
 }
 
