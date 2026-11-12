@@ -404,6 +404,14 @@ mark {
 .card-img video { width: 100%; height: 100%; object-fit: contain; background: var(--ink); display: block; }
 .video-card .card-body { align-items: center; padding: 24px; }
 .video-card .card-body h3 { font-size: 26px; word-break: keep-all; }
+/* 짧은 세로 영상 카드 4장: 한 줄에 4칸(태블릿 · 휴대폰은 2칸) */
+.cards.clip-row { margin-top: 22px; grid-template-columns: repeat(4, 1fr); }
+.works-page .cards.clip-row { grid-template-columns: repeat(4, 1fr); gap: 22px; }
+.clip-card .card-img { aspect-ratio: 9 / 16; border-bottom: var(--line); }
+.clip-card .card-body { align-items: center; }
+.works-page .clip-card .card-body h3 { font-size: 18px; }
+.works-page .clip-card .card-body p { font-size: 13px; }
+@media (max-width: 960px) { .cards.clip-row, .works-page .cards.clip-row { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 700px) {
   .video-card { flex-direction: column; }
   .video-card .card-img { width: 100%; max-width: 360px; margin: 0 auto; border-right: 0; border-bottom: var(--line); }
