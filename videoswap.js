@@ -6,6 +6,7 @@
   if (!card) return;
   var big = card.querySelector(".card-img video");
   var title = card.querySelector(".card-body h3");
+  var desc = card.querySelector(".card-body .video-desc");
   var figs = card.querySelectorAll(".clips .clip");
   if (!big || !title || !figs.length) return;
 
@@ -29,6 +30,8 @@
     var bigName = title.textContent, smallName = cap.textContent;
     title.textContent = smallName;
     cap.textContent = bigName;
+    // 설명 바꾸기 (큰 카드 설명 ↔ 작은 영상의 data-desc)
+    if (desc) { var bigDesc = desc.textContent; desc.textContent = fig.getAttribute("data-desc") || ""; fig.setAttribute("data-desc", bigDesc); }
     big.setAttribute("aria-label", smallName);
     small.setAttribute("aria-label", bigName);
     big.load();

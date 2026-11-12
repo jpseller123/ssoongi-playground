@@ -143,23 +143,23 @@
               <video src="work5-video.mp4#t=0.1" controls playsinline preload="metadata" aria-label="쑝이놀이터 작업 영상"></video>
             </div>
             <div class="card-body">
-              <div><h3>쑝이놀이터 작업 영상</h3><p>소리를 켜고 보면 더 재밌어요. 눌러서 재생해 보세요!</p></div>
+              <div><h3>쑝이놀이터 작업 영상</h3><p class="video-desc">송이의 하루예요. 세수하고, 김밥을 사 먹고, 낙엽 길을 걷다가 수업까지 들어요.</p></div>
               <p class="clips-hint">아래 영상을 누르면 이 큰 화면에서 재생돼요.</p>
               <!-- 8초 영상 4개 (영상을 바꾸거나 더하면 홈과 works.html 두 곳에 같이 넣어요) -->
               <div class="clips">
-                <figure class="clip">
+                <figure class="clip" data-desc="구름무늬 잠옷을 입은 송이가 졸린 눈으로 물을 받아 세수하며 잠에서 깨어나요.">
                   <video src="work6-washing.mp4#t=0.1" controls playsinline preload="metadata" aria-label="세수하기"></video>
                   <figcaption>세수하기</figcaption>
                 </figure>
-                <figure class="clip">
+                <figure class="clip" data-desc="분식 가게에 들어간 송이가 포장된 김밥을 건네받아 소중히 들어요.">
                   <video src="work7-snackshop.mp4#t=0.1" controls playsinline preload="metadata" aria-label="김밥 포장하기"></video>
                   <figcaption>김밥 포장하기</figcaption>
                 </figure>
-                <figure class="clip">
+                <figure class="clip" data-desc="단풍 든 공원 벤치에서 송이가 김밥을 먹고, 노란 낙엽이 깔린 길을 걸어가요.">
                   <video src="work8-walking.mp4#t=0.1" controls playsinline preload="metadata" aria-label="먹으며 걷기"></video>
                   <figcaption>먹으며 걷기</figcaption>
                 </figure>
-                <figure class="clip">
+                <figure class="clip" data-desc="교실에 앉아 노트북으로 수업을 듣던 송이가 카메라를 보며 활짝 웃어요.">
                   <video src="work9-clip.mp4#t=0.1" controls playsinline preload="metadata" aria-label="강의듣기"></video>
                   <figcaption>강의듣기</figcaption>
                 </figure>
@@ -329,6 +329,6 @@
   <script src="script.js?v=61"></script>
   <!-- 로그인 · 게시판 (Firebase를 인터넷에서 불러와 씀) -->
   <script type="module" src="board.js?v=10"></script>
-  <script src="videoswap.js?v=1"></script>
+  <script src="videoswap.js?v=2"></script>
 </body>
 </html>
