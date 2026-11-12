@@ -406,6 +406,8 @@ mark {
 .video-card .card-body h3 { font-size: 26px; word-break: keep-all; }
 /* 큰 영상 카드 오른쪽 흰 부분: 제목 · 설명 아래에 8초 영상 4개(작은 세로 영상) */
 .video-card .card-body { flex-direction: column; align-items: stretch; justify-content: center; gap: 20px; }
+.clips-hint { margin: 0 0 -8px; font-size: 12px; color: var(--gray); }
+.clip video { cursor: pointer; }
 .clips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .clip { margin: 0; }
 .clip video { display: block; width: 100%; aspect-ratio: 9 / 16; object-fit: contain; background: var(--ink); border: var(--line); border-radius: 10px; }
