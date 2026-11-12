@@ -391,12 +391,7 @@ mark {
 /* 전체 소식 페이지(news.html): 고정 헤더에 가리지 않게 위 여백 */
 .news-page { padding-top: 140px; min-height: 80vh; }
 .news-page .post-empty { box-shadow: none; border: 0; }
-/* 전체 작업물 페이지(works.html): 카드를 2칸으로 더 크게 */
-.works-page .cards { grid-template-columns: repeat(2, 1fr); gap: 26px; }
-.works-page .card:hover { transform: translateY(-4px); }
-.works-page .card-body h3 { font-size: 22px; }
-.works-page .card-body p { font-size: 15px; }
-@media (max-width: 700px) { .works-page .cards { grid-template-columns: 1fr; } }
+/* 전체 작업물 페이지(works.html)는 홈 WORKS와 같은 카드 모양을 씀 (위쪽 여백만 .news-page로 맞춤) */
 /* 영상 카드(세로 영상): 카드 가로 전체, 왼쪽 영상 + 오른쪽 글 / 휴대폰은 위아래 */
 .video-card { grid-column: 1 / -1; flex-direction: row; }
 .video-card:hover { transform: none; }
