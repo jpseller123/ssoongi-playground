@@ -4,7 +4,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, limit, onSnapshot, serverTimestamp }
+import { getFirestore, collection, addDoc, deleteDoc, doc, setDoc, query, where, documentId, orderBy, limit, onSnapshot, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -27,6 +27,43 @@ const FACES = [["ssoongi", "--pastel-yellow"], ["mongi", "--pastel-blue"], ["kon
 let isAdmin = false;
 let me = null;
 let news = null;   // 아직 못 불러왔으면 null
+
+// ----- 맨 위 고정 (관리자가 최대 3개까지) -----
+// 고정한 소식의 번호는 `meta/pins` 문서의 ids에 저장함(규칙에서도 3개까지로 제한). 오래된 소식도 고정할 수 있어서 따로 불러옴
+const MAX_PINS = 3;
+let pinIds = [];       // 고정된 소식 번호들(새로 고정한 것이 앞)
+let pinnedNews = [];   // 실제로 있는 고정 소식들
+let stopPinned = null;
+function watchPinned() {
+  if (stopPinned) { stopPinned(); stopPinned = null; }
+  if (!pinIds.length) { pinnedNews = []; draw(); return; }
+  stopPinned = onSnapshot(
+    query(collection(db, "news"), where(documentId(), "in", pinIds)),
+    (snap) => {
+      const byId = new Map(snap.docs.map((d) => [d.id, { id: d.id, ...d.data() }]));
+      pinnedNews = pinIds.map((id) => byId.get(id)).filter(Boolean);   // 지워진 소식은 빠짐
+      draw();
+    },
+    () => { pinnedNews = []; draw(); }
+  );
+}
+onSnapshot(doc(db, "meta", "pins"), (snap) => {
+  const ids = snap.exists() ? snap.data().ids : [];
+  pinIds = Array.isArray(ids) ? ids.slice(0, MAX_PINS) : [];
+  watchPinned();
+}, () => { pinIds = []; watchPinned(); });
+
+async function togglePin(n) {
+  const isPinned = pinnedNews.some((x) => x.id === n.id);
+  let ids;
+  if (isPinned) ids = pinnedNews.map((x) => x.id).filter((id) => id !== n.id);
+  else {
+    if (pinnedNews.length >= MAX_PINS) { alert("고정은 " + MAX_PINS + "개까지예요. 다른 소식의 고정을 먼저 풀어 주세요."); return; }
+    ids = [n.id, ...pinnedNews.map((x) => x.id)];
+  }
+  try { await setDoc(doc(db, "meta", "pins"), { ids }); }
+  catch (err) { alert("고정을 바꾸지 못했어요. (" + err.code + ")"); }
+}
 
 async function login() {
   try { await signInWithPopup(auth, new GoogleAuthProvider()); }
@@ -74,13 +111,15 @@ function message(text) {
 }
 function draw() {
   if (news === null) return;
-  newsCount.textContent = news.length ? "소식 " + news.length + "개" : "";
-  if (!news.length) { message("아직 올라온 소식이 없어요."); return; }
+  const pinnedSet = new Set(pinnedNews.map((x) => x.id));
+  const all = [...pinnedNews, ...news.filter((x) => !pinnedSet.has(x.id))];   // 고정 소식이 맨 위
+  newsCount.textContent = all.length ? "소식 " + all.length + "개" : "";
+  if (!all.length) { message("아직 올라온 소식이 없어요."); return; }
   newsList.textContent = "";
-  news.forEach((n, i) => {
+  all.forEach((n, i) => {
     const [face, color] = FACES[i % FACES.length];
     const row = document.createElement("div");
-    row.className = "row";
+    row.className = "row" + (pinnedSet.has(n.id) ? " pinned" : "");
     const sq = document.createElement("span");
     sq.className = "sq"; sq.style.setProperty("--c", "var(" + color + ")");
     const img = document.createElement("img"); img.src = face + ".svg?v=4"; img.alt = "";
@@ -91,15 +130,28 @@ function draw() {
     const strong = document.createElement("strong"); strong.textContent = n.title;
     text.appendChild(strong);
     if (n.body) { const p = document.createElement("p"); p.textContent = n.body; text.appendChild(p); }
-    const small = document.createElement("small"); small.textContent = fmt(n.createdAt) + " · 소식";
+    const small = document.createElement("small");
+    if (pinnedSet.has(n.id)) {   // 고정 소식에는 코랄 '고정' 알약
+      const badge = document.createElement("span"); badge.className = "pin-badge"; badge.textContent = "고정";
+      small.append(badge, " ");
+    }
+    small.append(fmt(n.createdAt) + " · 소식");
     text.appendChild(small);
     row.append(sq, text);
     if (isAdmin) {
+      const pin = document.createElement("button");   // 관리자에게만 '고정 / 고정 해제' 버튼
+      pin.type = "button"; pin.className = "row-pin"; pin.textContent = pinnedSet.has(n.id) ? "고정 해제" : "고정";
+      pin.addEventListener("click", () => togglePin(n));
+      row.appendChild(pin);
       const del = document.createElement("button");
       del.type = "button"; del.className = "row-del"; del.textContent = "삭제";
       del.addEventListener("click", async () => {
         if (!confirm("이 소식을 지울까요?")) return;
-        try { await deleteDoc(doc(db, "news", n.id)); }
+        try {
+          await deleteDoc(doc(db, "news", n.id));
+          // 고정된 소식을 지우면 고정 목록에서도 뺌
+          if (pinnedSet.has(n.id)) await setDoc(doc(db, "meta", "pins"), { ids: pinnedNews.map((x) => x.id).filter((id) => id !== n.id) });
+        }
         catch (err) { alert("지우지 못했어요. (" + err.code + ")"); }
       });
       row.appendChild(del);
