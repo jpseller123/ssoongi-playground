@@ -80,14 +80,29 @@ function fmt(ts) {
 function emptyRow(text) {
   const li = document.createElement("li");
   li.className = "post-empty";
-  li.textContent = text;
+  const img = document.createElement("img");   // 빈 게시판에는 쑝이가 안내
+  img.src = "ssoongi.svg?v=4"; img.alt = "";
+  const span = document.createElement("span");
+  span.textContent = text;
+  li.append(img, span);
   return li;
+}
+// 글쓴이마다 같은 캐릭터 얼굴이 나오게 uid로 하나를 고름
+const FACES = [["ssoongi", "--pastel-yellow"], ["mongi", "--pastel-blue"], ["kongi", "--pastel-green"], ["byeoli", "--pastel-peach"]];
+function faceOf(key) {
+  let h = 0;
+  for (const ch of String(key)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return FACES[h % FACES.length];
 }
 
 // ======================= NEWS (관리자만 쓰기 · 삭제) =======================
 const newsFallback = newsList.innerHTML;   // 올라온 소식이 없을 때 보여 줄 기본 한 줄
 const NEWS_FACES = [["ssoongi", "--pastel-yellow"], ["mongi", "--pastel-blue"], ["kongi", "--pastel-green"], ["byeoli", "--pastel-peach"]];
 let news = null;   // 아직 못 불러왔으면 null
+const NEWS_SHOWN = 3;   // 평소에 보이는 최근 소식 개수 (나머지는 화살표를 누르면 펼쳐짐)
+const newsMore = $("newsMore");
+let newsOpen = false;
+newsMore.addEventListener("click", () => { newsOpen = !newsOpen; drawNews(); });
 
 newsForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -106,9 +121,16 @@ newsForm.addEventListener("submit", async (e) => {
 });
 
 function drawNews() {
-  if (news === null || !news.length) { newsList.innerHTML = newsFallback; return; }   // 소식이 없으면 기본 한 줄
+  if (news === null || !news.length) { newsMore.hidden = true; newsList.innerHTML = newsFallback; return; }   // 소식이 없으면 기본 한 줄
+  // 4개 이상일 때만 화살표를 보여 주고, 접힌 상태에서는 최근 3개만 그림
+  const hasMore = news.length > NEWS_SHOWN;
+  if (!hasMore) newsOpen = false;
+  newsMore.hidden = !hasMore;
+  newsMore.textContent = newsOpen ? "↑" : "↓";
+  newsMore.setAttribute("aria-expanded", String(newsOpen));
+  newsMore.setAttribute("aria-label", newsOpen ? "소식 접기" : "소식 더 보기");
   newsList.textContent = "";
-  news.forEach((n, i) => {
+  (newsOpen ? news : news.slice(0, NEWS_SHOWN)).forEach((n, i) => {
     const [face, color] = NEWS_FACES[i % NEWS_FACES.length];
     // .up 을 미리 붙여서(script.js의 fade-up 규칙) 새로 생긴 줄도 보이게 함
     const row = document.createElement("div");
@@ -171,16 +193,31 @@ form.addEventListener("submit", async (e) => {
 });
 
 let posts = [];
+let postsAnimated = false;   // 처음 그릴 때만 차례로 올라오는 움직임(다시 그릴 때마다 깜빡이지 않게)
+const postCount = $("postCount");
 function drawPosts() {
   list.textContent = "";
+  postCount.textContent = posts.length ? "글 " + posts.length + "개" : "";
   if (!posts.length) { list.appendChild(emptyRow("아직 글이 없어요. 첫 글을 남겨 주세요!")); return; }
-  for (const p of posts) {
+  posts.forEach((p, i) => {
     const li = document.createElement("li");
-    li.className = "post";
+    li.className = "post" + (postsAnimated ? "" : " in");
+    li.style.setProperty("--d", Math.min(i, 8) * 0.1 + "s");
+    const [face, color] = faceOf(p.uid || p.name);
+    const av = document.createElement("span");
+    av.className = "avatar"; av.style.setProperty("--c", "var(" + color + ")");
+    const img = document.createElement("img"); img.src = face + ".svg?v=4"; img.alt = "";
+    av.appendChild(img);
+    const main = document.createElement("div"); main.className = "post-main";
+    // 글자는 textContent로만 넣어서, 남이 쓴 글에 코드가 섞여도 실행되지 않음
     const h = document.createElement("h3"); h.textContent = p.title;
     const b = document.createElement("p"); b.textContent = p.body;
-    const m = document.createElement("small"); m.textContent = p.name + " · " + fmt(p.createdAt);
-    li.append(h, b, m);
+    const meta = document.createElement("div"); meta.className = "post-meta";
+    const nm = document.createElement("span"); nm.className = "post-name"; nm.textContent = p.name;
+    const dt = document.createElement("small"); dt.textContent = fmt(p.createdAt);
+    meta.append(nm, dt);
+    main.append(h, b, meta);
+    li.append(av, main);
     if (isAdmin || (me && me.uid === p.uid)) {   // 관리자는 모든 글, 글쓴이는 내 글만 삭제
       const del = document.createElement("button");
       del.type = "button"; del.className = "post-del"; del.textContent = "삭제";
@@ -192,7 +229,8 @@ function drawPosts() {
       li.appendChild(del);
     }
     list.appendChild(li);
-  }
+  });
+  postsAnimated = true;
 }
 onSnapshot(
   query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(30)),

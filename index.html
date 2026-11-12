@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Poppins:wght@800&display=swap" rel="stylesheet">
   <!-- 헤더 로고 글자(쑝이놀이터)에만 쓰는 여러 글꼴: 필요한 글자만 받아서 가벼워요 -->
   <link href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&family=Black+Han+Sans&family=Gamja+Flower&family=Gaegu:wght@700&family=Hi+Melody&family=Gugi&family=Single+Day&family=Cute+Font&display=swap&text=%EC%91%9D%EC%9D%B4%EB%86%80%ED%84%B0" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=71">
+  <link rel="stylesheet" href="style.css?v=73">
 </head>
 <body>
 
@@ -109,7 +109,8 @@
               <span class="pill-tag">소식</span>
             </div>
           </div>
-          <a class="more" href="#news" aria-label="소식 더 보기">→</a>
+          <!-- 소식이 4개 이상일 때만 board.js가 보여 줌. 누르면 나머지 소식이 펼쳐지고 다시 누르면 접힘 -->
+          <button class="more" id="newsMore" type="button" hidden aria-expanded="false" aria-label="소식 더 보기">↓</button>
         </div>
 
         <!-- 소식 목록: 관리자가 올린 소식이 있으면 board.js가 이 안을 바꿔 채움. 없을 때는 아래 기본 한 줄이 보임 -->
@@ -247,6 +248,7 @@
         </div>
         <!-- 소식 올리기: NEWS 구역에 올라감 -->
         <form class="post-form" id="newsForm">
+          <span class="pill-tag form-tag">소식 쓰기</span>
           <input id="newsTitle" type="text" maxlength="80" placeholder="소식 제목" required aria-label="소식 제목">
           <textarea id="newsBody" maxlength="300" rows="3" placeholder="소식 내용 (비워도 돼요)" aria-label="소식 내용"></textarea>
           <div class="post-form-foot">
@@ -264,12 +266,13 @@
         <div class="head">
           <div>
             <h2 class="en-title">BOARD</h2>
-            <span class="pill-tag">게시판</span>
+            <span class="pill-tag">게시판</span><small class="board-count" id="postCount"></small>
           </div>
         </div>
 
         <!-- 글쓰기 칸: 구글 로그인하면 board.js가 보여 줌 (욕 · 비방은 올릴 수 없음) -->
         <form class="post-form" id="postForm" hidden>
+          <span class="pill-tag form-tag">글쓰기</span>
           <input id="postTitle" type="text" maxlength="80" placeholder="제목" required aria-label="제목">
           <textarea id="postBody" maxlength="1000" rows="4" placeholder="쑝이와 친구들에게 하고 싶은 말을 남겨 주세요. 욕이나 비방은 올릴 수 없어요." required aria-label="내용"></textarea>
           <div class="post-form-foot">
@@ -316,6 +319,6 @@
 
   <script src="script.js?v=61"></script>
   <!-- 로그인 · 게시판 (Firebase를 인터넷에서 불러와 씀) -->
-  <script type="module" src="board.js?v=3"></script>
+  <script type="module" src="board.js?v=5"></script>
 </body>
 </html>
