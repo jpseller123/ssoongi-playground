@@ -42,8 +42,8 @@ const db = getFirestore(app);
 const $ = (id) => document.getElementById(id);
 const loginBtn = $("loginBtn"), boardLoginBtn = $("boardLoginBtn"), boardLogin = $("boardLogin");
 const form = $("postForm"), list = $("postList"), who = $("postWho");
-const newsForm = $("newsForm"), newsList = $("newsList");
-const adminSection = $("admin"), adminLink = $("adminLink");
+const newsList = $("newsList");
+const adminLink = $("adminLink");
 let me = null;       // 지금 로그인한 사람
 let isAdmin = false; // 관리자인지
 
@@ -62,8 +62,7 @@ onAuthStateChanged(auth, (user) => {
   me = user;
   isAdmin = !!user && user.emailVerified && user.email === ADMIN_EMAIL;
   loginBtn.textContent = user ? "로그아웃" : "로그인";
-  adminSection.hidden = !isAdmin;   // 관리자에게만 ADMIN 구역 · 메뉴 링크가 보임
-  adminLink.hidden = !isAdmin;
+  adminLink.hidden = !isAdmin;   // 관리자에게만 헤더에 "관리자" 링크(전체 소식 페이지)가 보임
   form.hidden = !user;              // 로그인한 누구나 BOARD 글쓰기 칸이 보임
   boardLogin.hidden = !!user;
   who.textContent = user ? (user.displayName || "이름 없음") + " 이름으로 올라가요" : "";
@@ -101,22 +100,6 @@ const NEWS_FACES = [["ssoongi", "--pastel-yellow"], ["mongi", "--pastel-blue"], 
 let news = null;   // 아직 못 불러왔으면 null
 const NEWS_SHOWN = 3;   // 홈에 보이는 최근 소식 개수 (나머지는 화살표를 누르면 news.html에서 봄)
 const newsMore = $("newsMore");
-
-newsForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  if (!isAdmin) return;
-  const title = $("newsTitle").value.trim(), body = $("newsBody").value.trim();
-  if (!title) return;
-  const btn = newsForm.querySelector("button[type=submit]");
-  btn.disabled = true;
-  try {
-    await addDoc(collection(db, "news"), { title, body, createdAt: serverTimestamp() });
-    newsForm.reset();
-  } catch (err) {
-    alert("소식을 올리지 못했어요. (" + err.code + ")");
-  }
-  btn.disabled = false;
-});
 
 function drawNews() {
   if (news === null || !news.length) { newsMore.hidden = true; newsList.innerHTML = newsFallback; return; }   // 소식이 없으면 기본 한 줄

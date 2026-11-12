@@ -4,7 +4,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, collection, deleteDoc, doc, query, orderBy, limit, onSnapshot }
+import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, limit, onSnapshot, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -22,7 +22,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const $ = (id) => document.getElementById(id);
-const loginBtn = $("loginBtn"), newsList = $("newsList"), newsCount = $("newsCount");
+const loginBtn = $("loginBtn"), newsList = $("newsList"), newsCount = $("newsCount"), newsForm = $("newsForm");
 const FACES = [["ssoongi", "--pastel-yellow"], ["mongi", "--pastel-blue"], ["kongi", "--pastel-green"], ["byeoli", "--pastel-peach"]];
 let isAdmin = false;
 let me = null;
@@ -40,7 +40,25 @@ onAuthStateChanged(auth, (user) => {
   me = user;
   isAdmin = !!user && user.emailVerified && user.email === ADMIN_EMAIL;
   loginBtn.textContent = user ? "로그아웃" : "로그인";
+  newsForm.hidden = !isAdmin;   // 관리자에게만 소식 쓰기 칸이 보임
   draw();   // 관리자에게만 '삭제' 버튼이 보이게 다시 그림
+});
+
+// ----- 소식 쓰기 (관리자만) -----
+newsForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!isAdmin) return;
+  const title = $("newsTitle").value.trim(), body = $("newsBody").value.trim();
+  if (!title) return;
+  const btn = newsForm.querySelector("button[type=submit]");
+  btn.disabled = true;
+  try {
+    await addDoc(collection(db, "news"), { title, body, createdAt: serverTimestamp() });
+    newsForm.reset();
+  } catch (err) {
+    alert("소식을 올리지 못했어요. (" + err.code + ")");
+  }
+  btn.disabled = false;
 });
 
 function fmt(ts) {

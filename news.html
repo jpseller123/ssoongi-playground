@@ -33,6 +33,16 @@
           </div>
           <a class="more" href="index.html#news" aria-label="홈으로 돌아가기">←</a>
         </div>
+        <!-- 소식 쓰기 칸: 관리자 이메일로 로그인했을 때만 news.js가 보여 줌 -->
+        <form class="post-form" id="newsForm" hidden>
+          <span class="pill-tag form-tag">소식 쓰기</span>
+          <input id="newsTitle" type="text" maxlength="80" placeholder="소식 제목" required aria-label="소식 제목">
+          <textarea id="newsBody" maxlength="300" rows="3" placeholder="소식 내용 (비워도 돼요)" aria-label="소식 내용"></textarea>
+          <div class="post-form-foot">
+            <small>NEWS에 올라가요 (홈에는 최근 3개만 보여요)</small>
+            <button class="btn dark" type="submit">소식 올리기</button>
+          </div>
+        </form>
         <!-- news.js가 이 안을 소식으로 채움 -->
         <div class="news-box" id="newsList">
           <p class="post-empty">소식을 불러오는 중이에요…</p>
@@ -41,6 +51,6 @@
     </section>
   </main>
 
-  <script type="module" src="news.js?v=1"></script>
+  <script type="module" src="news.js?v=2"></script>
 </body>
 </html>

@@ -23,7 +23,7 @@
       <a href="#news">소식</a>
       <a href="#about">소개</a>
       <a href="#board">게시판</a>
-      <a href="#admin" id="adminLink" hidden>관리자</a>
+      <a href="news.html" id="adminLink" hidden>관리자</a>
       <!-- 로그인 버튼: board.js가 로그인하면 '이름 · 로그아웃'으로 바꿈 -->
       <button class="login-btn" id="loginBtn" type="button">로그인</button>
     </nav>
@@ -237,29 +237,6 @@
       </div>
     </section>
 
-    <!-- ADMIN: 관리자 전용 구역. 관리자 이메일로 로그인했을 때만 board.js가 보여 줌 (글쓰기 칸) -->
-    <section class="section admin" id="admin" hidden>
-      <div class="wrap">
-        <div class="head">
-          <div>
-            <h2 class="en-title">ADMIN</h2>
-            <span class="pill-tag">관리자</span>
-          </div>
-        </div>
-        <!-- 소식 올리기: NEWS 구역에 올라감 -->
-        <form class="post-form" id="newsForm">
-          <span class="pill-tag form-tag">소식 쓰기</span>
-          <input id="newsTitle" type="text" maxlength="80" placeholder="소식 제목" required aria-label="소식 제목">
-          <textarea id="newsBody" maxlength="300" rows="3" placeholder="소식 내용 (비워도 돼요)" aria-label="소식 내용"></textarea>
-          <div class="post-form-foot">
-            <small>NEWS 구역에 올라가요</small>
-            <button class="btn dark" type="submit">소식 올리기</button>
-          </div>
-        </form>
-        <p class="board-login">올린 소식은 위 NEWS에서 '삭제' 버튼으로 지울 수 있어요. BOARD의 모든 글도 지울 수 있어요.</p>
-      </div>
-    </section>
-
     <!-- BOARD: 게시판 (Firebase 무료 요금제. 읽기는 누구나, 글쓰기 · 삭제는 관리자만. 코드는 board.js) -->
     <section class="section" id="board">
       <div class="wrap reveal">
@@ -319,6 +296,6 @@
 
   <script src="script.js?v=61"></script>
   <!-- 로그인 · 게시판 (Firebase를 인터넷에서 불러와 씀) -->
-  <script type="module" src="board.js?v=6"></script>
+  <script type="module" src="board.js?v=7"></script>
 </body>
 </html>
