@@ -403,6 +403,18 @@ mark {
 .video-card .card-body { flex-direction: column; align-items: stretch; justify-content: center; gap: 20px; }
 .clips-hint { margin: 0 0 -8px; font-size: 12px; color: var(--gray); }
 .clip video { cursor: pointer; }
+/* WORKS 카드(쑝이 · 몽이 · 콩이 · 별이)에 마우스를 올리면 부드럽게 떠오르며 살짝 커지고 그림자가 짙어짐 (큰 영상 카드는 영상 조작 때문에 제외) */
+@media (prefers-reduced-motion: no-preference) {
+  .card { transition: transform .4s cubic-bezier(.22, 1, .36, 1), box-shadow .4s ease; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .card:not(.video-card):hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 5px 0 rgba(34, 34, 34, .14), 0 18px 26px rgba(34, 34, 34, .24);
+    position: relative; z-index: 2;
+  }
+}
+@media (prefers-reduced-motion: reduce) { .card:not(.video-card):hover { transform: none; } }
 /* 작은 영상에 마우스를 올리면 부드럽게 떠오르며 살짝 커지고 그림자가 생김 (마우스가 있는 기기에서만) */
 .clip { transition: transform .35s cubic-bezier(.22, 1, .36, 1); }
 .clip video { transition: box-shadow .35s ease; }
