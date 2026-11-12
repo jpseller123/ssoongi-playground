@@ -1,0 +1,23 @@
+rules_version = '2';
+// 게시판 보안 규칙: Firebase 콘솔 > Firestore Database > 규칙 탭에 붙여 넣고 '게시'를 누르세요.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /posts/{postId} {
+      // 읽기: 누구나
+      allow read: if true;
+      // 쓰기: 로그인한 사람만, 내 uid로만, 길이 제한, 시간은 서버가 정함
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['title', 'body', 'uid', 'name', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 80
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 1000
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40
+        && request.resource.data.createdAt == request.time;
+      // 수정: 안 됨 / 삭제: 내 글만
+      allow update: if false;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+  }
+}
