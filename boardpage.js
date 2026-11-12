@@ -4,8 +4,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, collection, deleteDoc, doc, query, orderBy, limit, onSnapshot }
+import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, limit, onSnapshot, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { isClean, BAD_MSG } from "./filter.js?v=1";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC4ixsBuPodIqO3_utYpU_vXXok48vTNMM",
@@ -23,6 +24,7 @@ const db = getFirestore(app);
 
 const $ = (id) => document.getElementById(id);
 const loginBtn = $("loginBtn"), list = $("postList"), postCount = $("postCount");
+const form = $("postForm"), who = $("postWho"), boardLogin = $("boardLogin"), boardLoginBtn = $("boardLoginBtn");
 const FACES = [["ssoongi", "--pastel-yellow"], ["mongi", "--pastel-blue"], ["kongi", "--pastel-green"], ["byeoli", "--pastel-peach"]];
 let me = null;
 let isAdmin = false;
@@ -36,11 +38,38 @@ async function login() {
   }
 }
 loginBtn.addEventListener("click", () => (me ? signOut(auth) : login()));
+boardLoginBtn.addEventListener("click", login);
 onAuthStateChanged(auth, (user) => {
   me = user;
   isAdmin = !!user && user.emailVerified && user.email === ADMIN_EMAIL;
   loginBtn.textContent = user ? "로그아웃" : "로그인";
+  form.hidden = !user;              // 로그인한 누구나 글쓰기 칸이 보임
+  boardLogin.hidden = !!user;
+  who.textContent = user ? (user.displayName || "이름 없음") + " 이름으로 올라가요" : "";
   draw();   // 삭제 버튼이 보이는 사람이 바뀌므로 다시 그림
+});
+
+// ----- 글쓰기 (로그인한 누구나, 욕 · 비방은 못 올림. 홈 BOARD와 같은 방식) -----
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!me) return;
+  const title = $("postTitle").value.trim(), body = $("postBody").value.trim();
+  if (!title || !body) return;
+  if (!isClean(title, body)) { alert(BAD_MSG); return; }
+  const btn = form.querySelector("button[type=submit]");
+  btn.disabled = true;
+  try {
+    await addDoc(collection(db, "posts"), {
+      title, body,
+      uid: me.uid,
+      name: (me.displayName || "이름 없음").slice(0, 40),
+      createdAt: serverTimestamp()
+    });
+    form.reset();
+  } catch (err) {
+    alert("글을 올리지 못했어요. 욕이나 비방이 들어 있지 않은지 확인해 주세요. (" + err.code + ")");
+  }
+  btn.disabled = false;
 });
 
 function fmt(ts) {
