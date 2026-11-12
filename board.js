@@ -6,7 +6,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, limit, onSnapshot, serverTimestamp }
+import { getFirestore, collection, addDoc, deleteDoc, doc, setDoc, query, where, documentId, orderBy, limit, onSnapshot, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -171,13 +171,53 @@ form.addEventListener("submit", async (e) => {
 let posts = [];
 let postsAnimated = false;   // 처음 그릴 때만 차례로 올라오는 움직임(다시 그릴 때마다 깜빡이지 않게)
 const postCount = $("postCount");
+
+// ----- 맨 위 고정 (관리자가 최대 3개까지) -----
+// 고정한 글의 번호는 `meta/pins` 문서의 ids 목록에 저장함(규칙에서 3개까지로 제한). 고정 글은 최신 30개 밖이어도 따로 불러옴
+const MAX_PINS = 3;
+let pinIds = [];        // 고정된 글 번호들(고정한 순서, 새로 고정한 것이 앞)
+let pinnedPosts = [];   // 실제로 있는 고정 글들
+let stopPinned = null;
+function watchPinned() {
+  if (stopPinned) { stopPinned(); stopPinned = null; }
+  if (!pinIds.length) { pinnedPosts = []; drawPosts(); return; }
+  stopPinned = onSnapshot(
+    query(collection(db, "posts"), where(documentId(), "in", pinIds)),
+    (snap) => {
+      const byId = new Map(snap.docs.map((d) => [d.id, { id: d.id, ...d.data() }]));
+      pinnedPosts = pinIds.map((id) => byId.get(id)).filter(Boolean);   // 지워진 글은 빠짐
+      drawPosts();
+    },
+    () => { pinnedPosts = []; drawPosts(); }
+  );
+}
+onSnapshot(doc(db, "meta", "pins"), (snap) => {
+  const ids = snap.exists() ? snap.data().ids : [];
+  pinIds = Array.isArray(ids) ? ids.slice(0, MAX_PINS) : [];
+  watchPinned();
+}, () => { pinIds = []; watchPinned(); });
+
+async function togglePin(p) {
+  const isPinned = pinnedPosts.some((x) => x.id === p.id);
+  let ids;
+  if (isPinned) ids = pinnedPosts.map((x) => x.id).filter((id) => id !== p.id);
+  else {
+    if (pinnedPosts.length >= MAX_PINS) { alert("고정은 " + MAX_PINS + "개까지예요. 다른 글의 고정을 먼저 풀어 주세요."); return; }
+    ids = [p.id, ...pinnedPosts.map((x) => x.id)];
+  }
+  try { await setDoc(doc(db, "meta", "pins"), { ids }); }
+  catch (err) { alert("고정을 바꾸지 못했어요. (" + err.code + ")"); }
+}
+
 function drawPosts() {
   list.textContent = "";
-  postCount.textContent = posts.length ? "글 " + posts.length + "개" : "";
-  if (!posts.length) { list.appendChild(emptyRow("아직 글이 없어요. 첫 글을 남겨 주세요!")); return; }
-  posts.forEach((p, i) => {
+  const pinnedSet = new Set(pinnedPosts.map((x) => x.id));
+  const shown = [...pinnedPosts, ...posts.filter((x) => !pinnedSet.has(x.id))];   // 고정 글이 맨 위
+  postCount.textContent = shown.length ? "글 " + shown.length + "개" : "";
+  if (!shown.length) { list.appendChild(emptyRow("아직 글이 없어요. 첫 글을 남겨 주세요!")); return; }
+  shown.forEach((p, i) => {
     const li = document.createElement("li");
-    li.className = "post" + (postsAnimated ? "" : " in");
+    li.className = "post" + (pinnedSet.has(p.id) ? " pinned" : "") + (isAdmin ? " admin" : "") + (postsAnimated ? "" : " in");
     li.style.setProperty("--d", Math.min(i, 8) * 0.1 + "s");
     const [face, color] = faceOf(p.uid || p.name);
     const av = document.createElement("span");
@@ -191,15 +231,29 @@ function drawPosts() {
     const meta = document.createElement("div"); meta.className = "post-meta";
     const nm = document.createElement("span"); nm.className = "post-name"; nm.textContent = p.name;
     const dt = document.createElement("small"); dt.textContent = fmt(p.createdAt);
+    if (pinnedSet.has(p.id)) {   // 고정 글에는 코랄 '고정' 알약
+      const badge = document.createElement("span"); badge.className = "pin-badge"; badge.textContent = "고정";
+      meta.append(badge);
+    }
     meta.append(nm, dt);
     main.append(h, b, meta);
     li.append(av, main);
+    if (isAdmin) {   // 관리자에게만 '고정 / 고정 해제' 버튼
+      const pin = document.createElement("button");
+      pin.type = "button"; pin.className = "post-pin"; pin.textContent = pinnedSet.has(p.id) ? "고정 해제" : "고정";
+      pin.addEventListener("click", () => togglePin(p));
+      li.appendChild(pin);
+    }
     if (isAdmin || (me && me.uid === p.uid)) {   // 관리자는 모든 글, 글쓴이는 내 글만 삭제
       const del = document.createElement("button");
       del.type = "button"; del.className = "post-del"; del.textContent = "삭제";
       del.addEventListener("click", async () => {
         if (!confirm("이 글을 지울까요?")) return;
-        try { await deleteDoc(doc(db, "posts", p.id)); }
+        try {
+          await deleteDoc(doc(db, "posts", p.id));
+          // 고정 글을 관리자가 지우면 고정 목록에서도 뺌(글쓴이가 지운 경우는 위 watchPinned가 알아서 빼서 보여 줌)
+          if (isAdmin && pinnedSet.has(p.id)) await setDoc(doc(db, "meta", "pins"), { ids: pinnedPosts.map((x) => x.id).filter((id) => id !== p.id) });
+        }
         catch (err) { alert("지우지 못했어요. (" + err.code + ")"); }
       });
       li.appendChild(del);
