@@ -408,6 +408,17 @@ mark {
 .video-card .card-body { flex-direction: column; align-items: stretch; justify-content: center; gap: 20px; }
 .clips-hint { margin: 0 0 -8px; font-size: 12px; color: var(--gray); }
 .clip video { cursor: pointer; }
+/* 작은 영상에 마우스를 올리면 부드럽게 떠오르며 살짝 커지고 그림자가 생김 (마우스가 있는 기기에서만) */
+.clip { transition: transform .35s cubic-bezier(.22, 1, .36, 1); }
+.clip video { transition: box-shadow .35s ease; }
+@media (hover: hover) and (pointer: fine) {
+  .clip:hover { transform: translateY(-6px) scale(1.07); position: relative; z-index: 2; }
+  .clip:hover video { box-shadow: 0 14px 22px rgba(34, 34, 34, .3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .clip, .clip video { transition: none; }
+  .clip:hover { transform: none; }
+}
 .clips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .clip { margin: 0; }
 .clip video { display: block; width: 100%; aspect-ratio: 9 / 16; object-fit: contain; background: var(--ink); border: var(--line); border-radius: 10px; }
