@@ -1,7 +1,8 @@
-// ===== 로그인 + 게시판 (Firebase 무료 Spark 요금제) =====
+// ===== 로그인 + NEWS(관리자 전용) + BOARD(로그인한 누구나) (Firebase 무료 Spark 요금제) =====
 // - 로그인: 구글 로그인만
-// - 게시판: 누구나 읽기, 관리자(ADMIN_EMAIL)만 글쓰기 · 삭제 (보안 규칙은 firestore.rules 참고)
-// - 이 설정값(firebaseConfig)은 공개되어도 되는 값이에요. 진짜 보안은 Firestore 보안 규칙이 맡아요.
+// - NEWS(`news` 모음): 누구나 읽기, 관리자(ADMIN_EMAIL)만 쓰기 · 삭제
+// - BOARD(`posts` 모음): 누구나 읽기, 로그인한 사람은 글쓰기(욕 · 비방은 못 올림), 삭제는 관리자(모든 글) · 글쓴이(내 글)
+// - 보안 규칙은 firestore.rules 참고. 이 설정값(firebaseConfig)은 공개돼도 되는 값이에요.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
@@ -17,16 +18,31 @@ const firebaseConfig = {
   appId: "1:36655522243:web:373754b3ca179449275d76"
 };
 
-// 관리자 이메일: 이 계정으로 로그인하면 ADMIN 구역이 보이고 글쓰기 · 삭제가 됨 (진짜 막는 곳은 firestore.rules)
+// 관리자 이메일: 이 계정으로 로그인하면 ADMIN 구역이 보이고 소식 쓰기 · 모든 글 삭제가 됨 (진짜 막는 곳은 firestore.rules)
 const ADMIN_EMAIL = "ilovejydh@gmail.com";
+
+// 올릴 수 없는 말(욕 · 비방). 띄어쓰기나 기호를 끼워 넣어도(예: "시 발") 걸러냄. firestore.rules의 clean()에도 같은 단어를 둠
+const BAD_WORDS = [
+  "시발", "씨발", "씨바", "시바", "ㅅㅂ", "ㅆㅂ", "병신", "븅신", "ㅂㅅ", "지랄", "ㅈㄹ", "존나", "졸라", "좆", "개새끼", "개세끼",
+  "미친놈", "미친년", "미친새끼", "꺼져", "닥쳐", "엿먹", "느금마", "니미", "니애미", "애미", "창녀", "걸레같", "한남충", "김치녀",
+  "사기꾼", "뒤져", "죽어버려", "죽여버", "자살해", "fuck", "shit", "bitch", "asshole", "bastard"
+];
+const NORMAL_BAD = BAD_WORDS.map((w) => w.toLowerCase());
+function isClean(...texts) {
+  // 한글 · 영어 글자만 남기고(띄어쓰기 · 숫자 · 기호 제거) 소문자로 바꿔서 검사
+  const t = texts.join(" ").toLowerCase().replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-z]/g, "");
+  return !NORMAL_BAD.some((w) => t.includes(w));
+}
+const BAD_MSG = "욕이나 비방으로 보이는 말이 들어 있어서 올릴 수 없어요. 표현을 바꿔 주세요.";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 const $ = (id) => document.getElementById(id);
-const loginBtn = $("loginBtn"), boardLogin = $("boardLogin");
+const loginBtn = $("loginBtn"), boardLoginBtn = $("boardLoginBtn"), boardLogin = $("boardLogin");
 const form = $("postForm"), list = $("postList"), who = $("postWho");
+const newsForm = $("newsForm"), newsList = $("newsList");
 const adminSection = $("admin"), adminLink = $("adminLink");
 let me = null;       // 지금 로그인한 사람
 let isAdmin = false; // 관리자인지
@@ -40,6 +56,7 @@ async function login() {
   }
 }
 loginBtn.addEventListener("click", () => (me ? signOut(auth) : login()));
+boardLoginBtn.addEventListener("click", login);
 
 onAuthStateChanged(auth, (user) => {
   me = user;
@@ -47,16 +64,96 @@ onAuthStateChanged(auth, (user) => {
   loginBtn.textContent = user ? "로그아웃" : "로그인";
   adminSection.hidden = !isAdmin;   // 관리자에게만 ADMIN 구역 · 메뉴 링크가 보임
   adminLink.hidden = !isAdmin;
-  who.textContent = isAdmin ? (user.displayName || "관리자") + " 이름으로 올라가요" : "";
-  draw();   // 관리자에게만 '삭제' 버튼이 보이게 다시 그림
+  form.hidden = !user;              // 로그인한 누구나 BOARD 글쓰기 칸이 보임
+  boardLogin.hidden = !!user;
+  who.textContent = user ? (user.displayName || "이름 없음") + " 이름으로 올라가요" : "";
+  drawNews();
+  drawPosts();   // 삭제 버튼이 보이는 사람이 바뀌므로 다시 그림
 });
 
-// ----- 글쓰기 -----
-form.addEventListener("submit", async (e) => {
+// ----- 공통 도우미 -----
+function fmt(ts) {
+  if (!ts) return "방금";
+  const d = ts.toDate();
+  return d.getFullYear() + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + String(d.getDate()).padStart(2, "0");
+}
+function emptyRow(text) {
+  const li = document.createElement("li");
+  li.className = "post-empty";
+  li.textContent = text;
+  return li;
+}
+
+// ======================= NEWS (관리자만 쓰기 · 삭제) =======================
+const newsFallback = newsList.innerHTML;   // 올라온 소식이 없을 때 보여 줄 기본 한 줄
+const NEWS_FACES = [["ssoongi", "--pastel-yellow"], ["mongi", "--pastel-blue"], ["kongi", "--pastel-green"], ["byeoli", "--pastel-peach"]];
+let news = null;   // 아직 못 불러왔으면 null
+
+newsForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!isAdmin) return;
+  const title = $("newsTitle").value.trim(), body = $("newsBody").value.trim();
+  if (!title) return;
+  const btn = newsForm.querySelector("button[type=submit]");
+  btn.disabled = true;
+  try {
+    await addDoc(collection(db, "news"), { title, body, createdAt: serverTimestamp() });
+    newsForm.reset();
+  } catch (err) {
+    alert("소식을 올리지 못했어요. (" + err.code + ")");
+  }
+  btn.disabled = false;
+});
+
+function drawNews() {
+  if (news === null || !news.length) { newsList.innerHTML = newsFallback; return; }   // 소식이 없으면 기본 한 줄
+  newsList.textContent = "";
+  news.forEach((n, i) => {
+    const [face, color] = NEWS_FACES[i % NEWS_FACES.length];
+    // .up 을 미리 붙여서(script.js의 fade-up 규칙) 새로 생긴 줄도 보이게 함
+    const row = document.createElement("div");
+    row.className = "row up";
+    row.style.setProperty("--d", (i * 0.12) + "s");
+    const sq = document.createElement("span");
+    sq.className = "sq"; sq.style.setProperty("--c", "var(" + color + ")");
+    const img = document.createElement("img");
+    img.src = face + ".svg?v=4"; img.alt = "";
+    sq.appendChild(img);
+    const text = document.createElement("span");
+    text.className = "row-text";
+    // 글자는 textContent로만 넣어서 코드가 섞여도 실행되지 않음
+    const strong = document.createElement("strong"); strong.textContent = n.title;
+    text.appendChild(strong);
+    if (n.body) { const p = document.createElement("p"); p.textContent = n.body; text.appendChild(p); }
+    const small = document.createElement("small"); small.textContent = fmt(n.createdAt) + " · 소식";
+    text.appendChild(small);
+    row.append(sq, text);
+    if (isAdmin) {
+      const del = document.createElement("button");
+      del.type = "button"; del.className = "row-del"; del.textContent = "삭제";
+      del.addEventListener("click", async () => {
+        if (!confirm("이 소식을 지울까요?")) return;
+        try { await deleteDoc(doc(db, "news", n.id)); }
+        catch (err) { alert("지우지 못했어요. (" + err.code + ")"); }
+      });
+      row.appendChild(del);
+    }
+    newsList.appendChild(row);
+  });
+}
+onSnapshot(
+  query(collection(db, "news"), orderBy("createdAt", "desc"), limit(20)),
+  (snap) => { news = snap.docs.map((d) => ({ id: d.id, ...d.data() })); drawNews(); },
+  () => { news = null; drawNews(); }   // 못 불러오면 기본 한 줄
+);
+
+// ======================= BOARD (로그인한 누구나 쓰기) =======================
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!me) return;
   const title = $("postTitle").value.trim(), body = $("postBody").value.trim();
   if (!title || !body) return;
+  if (!isClean(title, body)) { alert(BAD_MSG); return; }
   const btn = form.querySelector("button[type=submit]");
   btn.disabled = true;
   try {
@@ -68,36 +165,23 @@ form.addEventListener("submit", async (e) => {
     });
     form.reset();
   } catch (err) {
-    alert("글을 올리지 못했어요. (" + err.code + ")");
+    alert("글을 올리지 못했어요. 욕이나 비방이 들어 있지 않은지 확인해 주세요. (" + err.code + ")");
   }
   btn.disabled = false;
 });
 
-// ----- 글 목록 (최신 30개, 실시간으로 바뀜) -----
 let posts = [];
-function fmt(ts) {
-  if (!ts) return "방금";
-  const d = ts.toDate();
-  return d.getFullYear() + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + String(d.getDate()).padStart(2, "0");
-}
-function draw() {
+function drawPosts() {
   list.textContent = "";
-  if (!posts.length) {
-    const li = document.createElement("li");
-    li.className = "post-empty";
-    li.textContent = "아직 글이 없어요. 첫 글을 남겨 주세요!";
-    list.appendChild(li);
-    return;
-  }
+  if (!posts.length) { list.appendChild(emptyRow("아직 글이 없어요. 첫 글을 남겨 주세요!")); return; }
   for (const p of posts) {
     const li = document.createElement("li");
     li.className = "post";
-    // 글자는 textContent로만 넣어서, 남이 쓴 글에 코드가 섞여도 실행되지 않음
     const h = document.createElement("h3"); h.textContent = p.title;
     const b = document.createElement("p"); b.textContent = p.body;
     const m = document.createElement("small"); m.textContent = p.name + " · " + fmt(p.createdAt);
     li.append(h, b, m);
-    if (isAdmin) {
+    if (isAdmin || (me && me.uid === p.uid)) {   // 관리자는 모든 글, 글쓴이는 내 글만 삭제
       const del = document.createElement("button");
       del.type = "button"; del.className = "post-del"; del.textContent = "삭제";
       del.addEventListener("click", async () => {
@@ -112,12 +196,6 @@ function draw() {
 }
 onSnapshot(
   query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(30)),
-  (snap) => { posts = snap.docs.map((d) => ({ id: d.id, ...d.data() })); draw(); },
-  (err) => {
-    list.textContent = "";
-    const li = document.createElement("li");
-    li.className = "post-empty";
-    li.textContent = "게시판을 불러오지 못했어요. (" + err.code + ")";
-    list.appendChild(li);
-  }
+  (snap) => { posts = snap.docs.map((d) => ({ id: d.id, ...d.data() })); drawPosts(); },
+  (err) => { list.textContent = ""; list.appendChild(emptyRow("게시판을 불러오지 못했어요. (" + err.code + ")")); }
 );

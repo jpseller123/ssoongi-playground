@@ -1,18 +1,37 @@
 rules_version = '2';
-// 게시판 보안 규칙: Firebase 콘솔 > Firestore Database > 규칙 탭에 붙여 넣고 '게시'를 누르세요.
+// 보안 규칙: Firebase 콘솔 > Firestore Database > 규칙 탭에 붙여 넣고 '게시'를 누르세요.
 service cloud.firestore {
   match /databases/{database}/documents {
+
     // 관리자: 이 이메일로 구글 로그인(이메일 인증됨)한 사람 1명
     function isAdmin() {
       return request.auth != null
         && request.auth.token.email == 'ilovejydh@gmail.com'
         && request.auth.token.email_verified == true;
     }
-    match /posts/{postId} {
-      // 읽기: 누구나
+
+    // 욕 · 비방 단어가 없으면 true (board.js의 BAD_WORDS와 같은 단어. 서버쪽은 단순 일치만 검사)
+    function clean(s) {
+      return !s.lower().matches('(?s).*(시발|씨발|씨바|시바|ㅅㅂ|ㅆㅂ|병신|븅신|ㅂㅅ|지랄|ㅈㄹ|존나|졸라|좆|개새끼|개세끼|미친놈|미친년|미친새끼|꺼져|닥쳐|엿먹|느금마|니미|니애미|애미|창녀|걸레같|한남충|김치녀|사기꾼|뒤져|죽어버려|죽여버|자살해|fuck|shit|bitch|asshole|bastard).*');
+    }
+
+    // NEWS: 읽기 누구나 / 쓰기 · 삭제 관리자만
+    match /news/{newsId} {
       allow read: if true;
-      // 쓰기: 관리자만, 내 uid로만, 길이 제한, 시간은 서버가 정함
       allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['title', 'body', 'createdAt'])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 80
+        && request.resource.data.body is string && request.resource.data.body.size() <= 300
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // BOARD: 읽기 누구나 / 쓰기 로그인한 누구나(내 uid로만, 길이 제한, 욕 · 비방 금지) / 삭제 관리자(모든 글) · 글쓴이(내 글)
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if request.auth != null
         && request.resource.data.keys().hasOnly(['title', 'body', 'uid', 'name', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.title is string
@@ -20,10 +39,12 @@ service cloud.firestore {
         && request.resource.data.body is string
         && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 1000
         && request.resource.data.name is string && request.resource.data.name.size() <= 40
-        && request.resource.data.createdAt == request.time;
-      // 수정: 안 됨 / 삭제: 관리자만(모든 글)
+        && request.resource.data.createdAt == request.time
+        && clean(request.resource.data.title)
+        && clean(request.resource.data.body);
       allow update: if false;
-      allow delete: if isAdmin();
+      allow delete: if isAdmin()
+        || (request.auth != null && resource.data.uid == request.auth.uid);
     }
   }
 }

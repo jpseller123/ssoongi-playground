@@ -353,6 +353,10 @@ mark {
 }
 .post-del:hover { background: var(--pastel-peach); }
 .post-empty { color: var(--gray); text-align: center; }
+/* 관리자가 올린 소식 줄: 삭제 버튼 + 내용 */
+.row-text p { margin: 2px 0 0; font-size: 14px; color: var(--gray); overflow-wrap: anywhere; white-space: pre-wrap; }
+.row-del { flex: none; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--ink); background: var(--bg); border: var(--line); border-radius: 999px; padding: 1px 10px; }
+.row-del:hover { background: var(--pastel-peach); }
 
 /* ===== 첫 화면 HELLO! 옆 오늘 날짜 (숫자 굴리기) ===== */
 .title-row { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0 28px; }
