@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>전체 작업물 · 쑝이놀이터</title>
+  <meta name="description" content="쑝이놀이터의 모든 작업물을 모아 봤어요.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Poppins:wght@800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=77">
+</head>
+<body>
+
+  <!-- 맨 위 메뉴 (홈과 같은 모양): 로고와 홈으로 가는 링크 -->
+  <header class="nav">
+    <a class="logo" href="index.html" aria-label="쑝이놀이터 홈으로">쑝이놀이터</a>
+    <nav class="menu" aria-label="주 메뉴">
+      <a href="index.html">← 홈으로</a>
+      <a href="news.html">소식</a>
+      <a href="board.html">게시판</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 전체 작업물: 새 작업물은 홈(index.html)의 WORKS 카드와 이곳에 같이 넣어요 -->
+    <section class="section news-page works-page">
+      <div class="wrap">
+        <div class="head">
+          <div>
+            <h2 class="en-title">WORKS</h2>
+            <span class="pill-tag">전체 작업물</span>
+          </div>
+          <a class="more" href="index.html#works" aria-label="홈으로 돌아가기">←</a>
+        </div>
+
+        <div class="cards">
+          <!-- 이미지 자리: img의 src를 내 작업 이미지로 바꾸면 돼요 -->
+          <article class="card">
+            <div class="card-img" style="--c: var(--pastel-blue)">
+              <span class="label coral">캐릭터</span>
+              <img src="work1-ssoongi.svg?v=5" alt="쑝이 작업 이미지">
+            </div>
+            <div class="card-body">
+              <div><h3>쑝이</h3><p>날개를 번쩍 들고 놀이터를 지키는 호기심 많은 아기 새.</p></div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-img" style="--c: var(--pastel-peach)">
+              <span class="label beige">일러스트</span>
+              <img src="work2-mongi.svg?v=5" alt="몽이 작업 이미지">
+            </div>
+            <div class="card-body">
+              <div><h3>몽이</h3><p>귀를 팔랑이며 폴짝폴짝 뛰어다니는 파란 토끼.</p></div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-img" style="--c: var(--pastel-yellow)">
+              <span class="label coral">캐릭터</span>
+              <img src="work3-kongi.svg?v=5" alt="콩이 작업 이미지">
+            </div>
+            <div class="card-body">
+              <div><h3>콩이</h3><p>낮잠이 제일 좋은 느긋하고 푸근한 초록 곰.</p></div>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-img" style="--c: var(--pastel-green)">
+              <span class="label beige">일러스트</span>
+              <img src="work4-byeoli.svg?v=5" alt="별이 작업 이미지">
+            </div>
+            <div class="card-body">
+              <div><h3>별이</h3><p>별을 모으며 윙크하는 밤하늘 고양이.</p></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
