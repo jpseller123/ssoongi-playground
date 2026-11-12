@@ -2,11 +2,17 @@ rules_version = '2';
 // 게시판 보안 규칙: Firebase 콘솔 > Firestore Database > 규칙 탭에 붙여 넣고 '게시'를 누르세요.
 service cloud.firestore {
   match /databases/{database}/documents {
+    // 관리자: 이 이메일로 구글 로그인(이메일 인증됨)한 사람 1명
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'ilovejydh@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
     match /posts/{postId} {
       // 읽기: 누구나
       allow read: if true;
-      // 쓰기: 로그인한 사람만, 내 uid로만, 길이 제한, 시간은 서버가 정함
-      allow create: if request.auth != null
+      // 쓰기: 관리자만, 내 uid로만, 길이 제한, 시간은 서버가 정함
+      allow create: if isAdmin()
         && request.resource.data.keys().hasOnly(['title', 'body', 'uid', 'name', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.title is string
@@ -15,9 +21,9 @@ service cloud.firestore {
         && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 1000
         && request.resource.data.name is string && request.resource.data.name.size() <= 40
         && request.resource.data.createdAt == request.time;
-      // 수정: 안 됨 / 삭제: 내 글만
+      // 수정: 안 됨 / 삭제: 관리자만(모든 글)
       allow update: if false;
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow delete: if isAdmin();
     }
   }
 }

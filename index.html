@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Poppins:wght@800&display=swap" rel="stylesheet">
   <!-- 헤더 로고 글자(쑝이놀이터)에만 쓰는 여러 글꼴: 필요한 글자만 받아서 가벼워요 -->
   <link href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&family=Black+Han+Sans&family=Gamja+Flower&family=Gaegu:wght@700&family=Hi+Melody&family=Gugi&family=Single+Day&family=Cute+Font&display=swap&text=%EC%91%9D%EC%9D%B4%EB%86%80%ED%84%B0" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=69">
+  <link rel="stylesheet" href="style.css?v=70">
 </head>
 <body>
 
@@ -23,6 +23,7 @@
       <a href="#news">소식</a>
       <a href="#about">소개</a>
       <a href="#board">게시판</a>
+      <a href="#admin" id="adminLink" hidden>관리자</a>
       <a href="#contact">연락</a>
       <!-- 로그인 버튼: board.js가 로그인하면 '이름 · 로그아웃'으로 바꿈 -->
       <button class="login-btn" id="loginBtn" type="button">로그인</button>
@@ -245,7 +246,28 @@
       </div>
     </section>
 
-    <!-- BOARD: 방명록 게시판 (Firebase 무료 요금제. 읽기는 누구나, 글쓰기는 구글 로그인 후, 삭제는 내 글만. 코드는 board.js) -->
+    <!-- ADMIN: 관리자 전용 구역. 관리자 이메일로 로그인했을 때만 board.js가 보여 줌 (글쓰기 칸) -->
+    <section class="section admin" id="admin" hidden>
+      <div class="wrap">
+        <div class="head">
+          <div>
+            <h2 class="en-title">ADMIN</h2>
+            <span class="pill-tag">관리자</span>
+          </div>
+        </div>
+        <form class="post-form" id="postForm">
+          <input id="postTitle" type="text" maxlength="80" placeholder="제목" required aria-label="제목">
+          <textarea id="postBody" maxlength="1000" rows="4" placeholder="게시판에 올릴 글을 써 주세요." required aria-label="내용"></textarea>
+          <div class="post-form-foot">
+            <small id="postWho"></small>
+            <button class="btn dark" type="submit">글 올리기</button>
+          </div>
+        </form>
+        <p class="board-login">올린 글은 아래 BOARD에서 '삭제' 버튼으로 지울 수 있어요. (관리자는 모든 글을 지울 수 있어요)</p>
+      </div>
+    </section>
+
+    <!-- BOARD: 게시판 (Firebase 무료 요금제. 읽기는 누구나, 글쓰기 · 삭제는 관리자만. 코드는 board.js) -->
     <section class="section" id="board">
       <div class="wrap reveal">
         <div class="head">
@@ -255,17 +277,8 @@
           </div>
         </div>
 
-        <!-- 글쓰기 칸: 로그인하면 board.js가 보여 줌 -->
-        <form class="post-form" id="postForm" hidden>
-          <input id="postTitle" type="text" maxlength="80" placeholder="제목" required aria-label="제목">
-          <textarea id="postBody" maxlength="1000" rows="4" placeholder="쑝이와 친구들에게 하고 싶은 말을 남겨 주세요." required aria-label="내용"></textarea>
-          <div class="post-form-foot">
-            <small id="postWho"></small>
-            <button class="btn dark" type="submit">글 올리기</button>
-          </div>
-        </form>
-        <!-- 로그인 안내: 로그인 전에 보임 -->
-        <p class="board-login" id="boardLogin">글을 쓰려면 <button class="link-btn" id="boardLoginBtn" type="button">구글로 로그인</button>해 주세요. 읽기는 로그인 없이 가능해요.</p>
+        <!-- 안내: 글쓰기는 관리자만 (board.js가 로그인 상태에 맞게 바꿈) -->
+        <p class="board-login" id="boardLogin">소식과 이야기는 관리자가 올려요. 읽기는 로그인 없이 누구나 할 수 있어요.</p>
 
         <ul class="post-list" id="postList" aria-live="polite">
           <li class="post-empty">게시판을 불러오는 중이에요…</li>
@@ -303,6 +316,6 @@
 
   <script src="script.js?v=61"></script>
   <!-- 로그인 · 게시판 (Firebase를 인터넷에서 불러와 씀) -->
-  <script type="module" src="board.js?v=1"></script>
+  <script type="module" src="board.js?v=2"></script>
 </body>
 </html>

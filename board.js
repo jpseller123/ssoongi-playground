@@ -1,6 +1,6 @@
 // ===== 로그인 + 게시판 (Firebase 무료 Spark 요금제) =====
 // - 로그인: 구글 로그인만
-// - 게시판: 누구나 읽기, 로그인한 사람만 글쓰기, 내 글만 삭제 (보안 규칙은 firestore.rules 참고)
+// - 게시판: 누구나 읽기, 관리자(ADMIN_EMAIL)만 글쓰기 · 삭제 (보안 규칙은 firestore.rules 참고)
 // - 이 설정값(firebaseConfig)은 공개되어도 되는 값이에요. 진짜 보안은 Firestore 보안 규칙이 맡아요.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
@@ -17,14 +17,19 @@ const firebaseConfig = {
   appId: "1:36655522243:web:373754b3ca179449275d76"
 };
 
+// 관리자 이메일: 이 계정으로 로그인하면 ADMIN 구역이 보이고 글쓰기 · 삭제가 됨 (진짜 막는 곳은 firestore.rules)
+const ADMIN_EMAIL = "ilovejydh@gmail.com";
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 const $ = (id) => document.getElementById(id);
-const loginBtn = $("loginBtn"), boardLoginBtn = $("boardLoginBtn"), boardLogin = $("boardLogin");
+const loginBtn = $("loginBtn"), boardLogin = $("boardLogin");
 const form = $("postForm"), list = $("postList"), who = $("postWho");
-let me = null;   // 지금 로그인한 사람
+const adminSection = $("admin"), adminLink = $("adminLink");
+let me = null;       // 지금 로그인한 사람
+let isAdmin = false; // 관리자인지
 
 // ----- 로그인 / 로그아웃 -----
 async function login() {
@@ -35,21 +40,21 @@ async function login() {
   }
 }
 loginBtn.addEventListener("click", () => (me ? signOut(auth) : login()));
-boardLoginBtn.addEventListener("click", login);
 
 onAuthStateChanged(auth, (user) => {
   me = user;
+  isAdmin = !!user && user.emailVerified && user.email === ADMIN_EMAIL;
   loginBtn.textContent = user ? "로그아웃" : "로그인";
-  form.hidden = !user;
-  boardLogin.hidden = !!user;
-  who.textContent = user ? (user.displayName || "이름 없음") + " 이름으로 올라가요" : "";
-  draw();   // 내 글에만 '삭제' 버튼이 보이게 다시 그림
+  adminSection.hidden = !isAdmin;   // 관리자에게만 ADMIN 구역 · 메뉴 링크가 보임
+  adminLink.hidden = !isAdmin;
+  who.textContent = isAdmin ? (user.displayName || "관리자") + " 이름으로 올라가요" : "";
+  draw();   // 관리자에게만 '삭제' 버튼이 보이게 다시 그림
 });
 
 // ----- 글쓰기 -----
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (!me) return;
+  if (!isAdmin) return;
   const title = $("postTitle").value.trim(), body = $("postBody").value.trim();
   if (!title || !body) return;
   const btn = form.querySelector("button[type=submit]");
@@ -92,7 +97,7 @@ function draw() {
     const b = document.createElement("p"); b.textContent = p.body;
     const m = document.createElement("small"); m.textContent = p.name + " · " + fmt(p.createdAt);
     li.append(h, b, m);
-    if (me && me.uid === p.uid) {
+    if (isAdmin) {
       const del = document.createElement("button");
       del.type = "button"; del.className = "post-del"; del.textContent = "삭제";
       del.addEventListener("click", async () => {
