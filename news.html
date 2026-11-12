@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>전체 소식 · 쑝이놀이터</title>
+  <meta name="description" content="쑝이놀이터의 모든 소식을 모아 봤어요.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Poppins:wght@800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=74">
+</head>
+<body>
+
+  <!-- 맨 위 메뉴 (홈과 같은 모양): 로고와 홈으로 가는 링크 -->
+  <header class="nav">
+    <a class="logo" href="index.html" aria-label="쑝이놀이터 홈으로">쑝이놀이터</a>
+    <nav class="menu" aria-label="주 메뉴">
+      <a href="index.html">← 홈으로</a>
+      <a href="index.html#board">게시판</a>
+      <button class="login-btn" id="loginBtn" type="button">로그인</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 전체 소식: 홈의 NEWS는 최근 3개만 보여서, 나머지는 여기서 봄 -->
+    <section class="section news-page">
+      <div class="wrap">
+        <div class="head">
+          <div>
+            <h2 class="en-title">NEWS</h2>
+            <span class="pill-tag">전체 소식</span><small class="board-count" id="newsCount"></small>
+          </div>
+          <a class="more" href="index.html#news" aria-label="홈으로 돌아가기">←</a>
+        </div>
+        <!-- news.js가 이 안을 소식으로 채움 -->
+        <div class="news-box" id="newsList">
+          <p class="post-empty">소식을 불러오는 중이에요…</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="news.js?v=1"></script>
+</body>
+</html>

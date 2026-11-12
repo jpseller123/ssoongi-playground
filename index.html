@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Poppins:wght@800&display=swap" rel="stylesheet">
   <!-- 헤더 로고 글자(쑝이놀이터)에만 쓰는 여러 글꼴: 필요한 글자만 받아서 가벼워요 -->
   <link href="https://fonts.googleapis.com/css2?family=Jua&family=Do+Hyeon&family=Black+Han+Sans&family=Gamja+Flower&family=Gaegu:wght@700&family=Hi+Melody&family=Gugi&family=Single+Day&family=Cute+Font&display=swap&text=%EC%91%9D%EC%9D%B4%EB%86%80%ED%84%B0" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=73">
+  <link rel="stylesheet" href="style.css?v=74">
 </head>
 <body>
 
@@ -109,8 +109,8 @@
               <span class="pill-tag">소식</span>
             </div>
           </div>
-          <!-- 소식이 4개 이상일 때만 board.js가 보여 줌. 누르면 나머지 소식이 펼쳐지고 다시 누르면 접힘 -->
-          <button class="more" id="newsMore" type="button" hidden aria-expanded="false" aria-label="소식 더 보기">↓</button>
+          <!-- 소식이 4개 이상일 때만 board.js가 보여 줌. 누르면 전체 소식 페이지(news.html)로 이동 -->
+          <a class="more" id="newsMore" href="news.html" hidden aria-label="전체 소식 보기">→</a>
         </div>
 
         <!-- 소식 목록: 관리자가 올린 소식이 있으면 board.js가 이 안을 바꿔 채움. 없을 때는 아래 기본 한 줄이 보임 -->
@@ -319,6 +319,6 @@
 
   <script src="script.js?v=61"></script>
   <!-- 로그인 · 게시판 (Firebase를 인터넷에서 불러와 씀) -->
-  <script type="module" src="board.js?v=5"></script>
+  <script type="module" src="board.js?v=6"></script>
 </body>
 </html>

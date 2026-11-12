@@ -99,10 +99,8 @@ function faceOf(key) {
 const newsFallback = newsList.innerHTML;   // 올라온 소식이 없을 때 보여 줄 기본 한 줄
 const NEWS_FACES = [["ssoongi", "--pastel-yellow"], ["mongi", "--pastel-blue"], ["kongi", "--pastel-green"], ["byeoli", "--pastel-peach"]];
 let news = null;   // 아직 못 불러왔으면 null
-const NEWS_SHOWN = 3;   // 평소에 보이는 최근 소식 개수 (나머지는 화살표를 누르면 펼쳐짐)
+const NEWS_SHOWN = 3;   // 홈에 보이는 최근 소식 개수 (나머지는 화살표를 누르면 news.html에서 봄)
 const newsMore = $("newsMore");
-let newsOpen = false;
-newsMore.addEventListener("click", () => { newsOpen = !newsOpen; drawNews(); });
 
 newsForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -122,15 +120,10 @@ newsForm.addEventListener("submit", async (e) => {
 
 function drawNews() {
   if (news === null || !news.length) { newsMore.hidden = true; newsList.innerHTML = newsFallback; return; }   // 소식이 없으면 기본 한 줄
-  // 4개 이상일 때만 화살표를 보여 주고, 접힌 상태에서는 최근 3개만 그림
-  const hasMore = news.length > NEWS_SHOWN;
-  if (!hasMore) newsOpen = false;
-  newsMore.hidden = !hasMore;
-  newsMore.textContent = newsOpen ? "↑" : "↓";
-  newsMore.setAttribute("aria-expanded", String(newsOpen));
-  newsMore.setAttribute("aria-label", newsOpen ? "소식 접기" : "소식 더 보기");
+  // 4개 이상일 때만 화살표(전체 소식 페이지 링크)를 보여 주고, 홈에는 최근 3개만 그림
+  newsMore.hidden = news.length <= NEWS_SHOWN;
   newsList.textContent = "";
-  (newsOpen ? news : news.slice(0, NEWS_SHOWN)).forEach((n, i) => {
+  news.slice(0, NEWS_SHOWN).forEach((n, i) => {
     const [face, color] = NEWS_FACES[i % NEWS_FACES.length];
     // .up 을 미리 붙여서(script.js의 fade-up 규칙) 새로 생긴 줄도 보이게 함
     const row = document.createElement("div");

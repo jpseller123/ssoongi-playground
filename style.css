@@ -383,6 +383,9 @@ mark {
   .post.in { animation: none; }
 }
 
+/* 전체 소식 페이지(news.html): 고정 헤더에 가리지 않게 위 여백 */
+.news-page { padding-top: 140px; min-height: 80vh; }
+.news-page .post-empty { box-shadow: none; border: 0; }
 /* 관리자가 올린 소식 줄: 삭제 버튼 + 내용 */
 .row-text p { margin: 2px 0 0; font-size: 14px; color: var(--gray); overflow-wrap: anywhere; white-space: pre-wrap; }
 .row-del { flex: none; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--ink); background: var(--bg); border: var(--line); border-radius: 999px; padding: 1px 10px; }
